@@ -6,9 +6,21 @@
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "vite:dev": "vite",
+    "vite:build": "vite build",
+    "vite:preview": "vite preview",
+    "lint": "eslint --ext .ts,.tsx .",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
   },
   "dependencies": {
+    "@emotion/react": "^11.12.0",
+    "@emotion/styled": "^11.12.0",
+    "@mui/icons-material": "^5.14.0",
+    "@mui/material": "^5.14.0",
+    "@reduxjs/toolkit": "^2.12.0",
+    "axios": "^1.7.0",
+    "react-redux": "^9.2.0",
     "@react-router/node": "7.15.1",
     "@react-router/serve": "7.15.1",
     "isbot": "^5.1.36",
@@ -17,6 +29,13 @@
     "react-router": "7.15.1"
   },
   "devDependencies": {
+    "eslint": "^8.52.0",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-jsx-a11y": "^6.7.1",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "prettier": "^2.8.8",
     "@react-router/dev": "7.15.1",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^22",

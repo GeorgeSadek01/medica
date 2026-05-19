@@ -187,6 +187,36 @@ npm run dev
 
 Your application will be available at `http://localhost:5173`.
 
+## Project setup (frontend)
+
+Quick steps to get the frontend running locally after cloning:
+
+1. Install dependencies
+
+```bash
+pnpm install
+```
+
+2. Copy example env and edit
+
+```bash
+copy .env.example .env
+```
+
+3. Start dev server (Vite)
+
+```bash
+pnpm run vite:dev
+```
+
+4. Lint and format
+
+```bash
+pnpm run lint
+pnpm run format
+```
+
+
 ## Building for Production
 
 Create a production build:
