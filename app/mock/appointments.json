@@ -1,0 +1,58 @@
+[
+  {
+    "id": 1,
+    "doctor": 1,
+    "doctor_name": "Dr. Ahmed Hassan",
+    "specialty": "Cardiology",
+    "patient": 1,
+    "patient_name": "Youssef Tarek",
+    "date": "2025-05-25",
+    "time_slot": 1,
+    "time": "09:00",
+    "status": "confirmed",
+    "notes": "",
+    "doctor_notes": ""
+  },
+  {
+    "id": 2,
+    "doctor": 2,
+    "doctor_name": "Dr. Sara Mohamed",
+    "specialty": "Dermatology",
+    "patient": 1,
+    "patient_name": "Youssef Tarek",
+    "date": "2025-05-27",
+    "time_slot": 4,
+    "time": "08:00",
+    "status": "pending",
+    "notes": "First visit",
+    "doctor_notes": ""
+  },
+  {
+    "id": 3,
+    "doctor": 3,
+    "doctor_name": "Dr. Omar Ali",
+    "specialty": "Neurology",
+    "patient": 2,
+    "patient_name": "Nour Khaled",
+    "date": "2025-05-20",
+    "time_slot": 6,
+    "time": "13:00",
+    "status": "completed",
+    "notes": "",
+    "doctor_notes": "Follow-up in 3 weeks."
+  },
+  {
+    "id": 4,
+    "doctor": 1,
+    "doctor_name": "Dr. Ahmed Hassan",
+    "specialty": "Cardiology",
+    "patient": 3,
+    "patient_name": "Mariam Samir",
+    "date": "2025-05-22",
+    "time_slot": 2,
+    "time": "14:00",
+    "status": "cancelled",
+    "notes": "Patient requested cancellation",
+    "doctor_notes": ""
+  }
+]
