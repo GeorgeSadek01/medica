@@ -21,6 +21,7 @@ export default defineConfig([
     plugins: { prettier },
     rules: {
       'prettier/prettier': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
     languageOptions: {
       globals: globals.browser,
