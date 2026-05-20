@@ -5,6 +5,7 @@ import ProtectedRoute from '../components/ProtectedRoute';
 import HomePage from '../pages/HomePage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
+import DoctorProfilePage from '../pages/DoctorProfilePage';
 
 const router = createBrowserRouter([
   {
@@ -23,7 +24,10 @@ const router = createBrowserRouter([
     children: [
       {
         element: <MainLayout />,
-        children: [{ index: true, element: <HomePage /> }],
+        children: [
+          { index: true, element: <HomePage /> },
+          { path: 'doctor/profile', element: <DoctorProfilePage /> },
+        ],
       },
     ],
   },

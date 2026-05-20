@@ -1,5 +1,5 @@
-import { Outlet, useNavigate } from 'react-router-dom';
-import { Box, Container, AppBar, Toolbar, Typography, Button } from '@mui/material';
+import { Outlet, useNavigate, Link as RouterLink } from 'react-router-dom';
+import { Box, Container, AppBar, Toolbar, Typography, Button, Link } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '../store';
 import { logout, selectUser } from '../store/authSlice';
 
@@ -13,6 +13,12 @@ function MainLayout() {
     navigate('/login', { replace: true });
   };
 
+  const getProfilePath = () => {
+    if (user?.role === 'doctor') {
+      return '/doctor/profile';
+    }
+    return '/patient/profile';
+  };
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <AppBar position="sticky">
@@ -22,9 +28,15 @@ function MainLayout() {
           </Typography>
           {user && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
+              <Link
+                component={RouterLink}
+                to={getProfilePath()}
+                color="inherit"
+                underline="hover"
+                sx={{ display: { xs: 'none', sm: 'block' }, fontWeight: 500, cursor: 'pointer' }}
+              >
                 {user.first_name} {user.last_name}
-              </Typography>
+              </Link>
               <Button color="inherit" onClick={handleLogout}>
                 Logout
               </Button>
