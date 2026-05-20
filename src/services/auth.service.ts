@@ -1,3 +1,14 @@
+import { db } from '../mock/db';
+import type { Storable } from '../mock/db';
+
+interface User extends Storable {
+  email: string;
+  password: string;
+  first_name: string;
+  last_name: string;
+  role: 'patient' | 'doctor';
+}
+
 interface LoginData {
   email: string;
   password: string;
@@ -11,35 +22,52 @@ interface RegisterData {
   role: 'patient' | 'doctor';
 }
 
+function omitPassword(user: User): Omit<User, 'password'> {
+  return {
+    id: user.id,
+    email: user.email,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    role: user.role,
+  };
+}
+
 const authService = {
   login: async (data: LoginData) => {
-    await new Promise((r) => setTimeout(r, 300));
-    const mockUser = {
-      id: 1,
-      email: data.email,
-      role: data.email.includes('doctor') ? 'doctor' : ('patient' as const),
-    };
+    const user = await db.find<User>(
+      'users',
+      (u) => u.email === data.email && u.password === data.password,
+    );
+    if (!user) {
+      throw new Error('Invalid email or password');
+    }
+    const safeUser = omitPassword(user);
     localStorage.setItem('accessToken', 'mock_access_token_123');
     localStorage.setItem('refreshToken', 'mock_refresh_token_456');
-    localStorage.setItem('user', JSON.stringify(mockUser));
+    localStorage.setItem('user', JSON.stringify(safeUser));
     return {
       access: 'mock_access_token_123',
       refresh: 'mock_refresh_token_456',
-      user: mockUser,
+      user: safeUser,
     };
   },
 
   register: async (data: RegisterData) => {
-    await new Promise((r) => setTimeout(r, 300));
-    const mockUser = {
-      id: Math.floor(Math.random() * 1000),
-      email: data.email,
-      first_name: data.first_name,
-      last_name: data.last_name,
-      role: data.role,
-    };
-    localStorage.setItem('user', JSON.stringify(mockUser));
-    return { message: 'Registration successful', user: mockUser };
+    const existing = await db.find<User>('users', (u) => u.email === data.email);
+    if (existing) {
+      throw new Error('An account with this email already exists');
+    }
+    const { password, ...rest } = data;
+    const newUser = await db.create<User>('users', {
+      email: rest.email,
+      password,
+      first_name: rest.first_name,
+      last_name: rest.last_name,
+      role: rest.role,
+    });
+    const safeUser = omitPassword(newUser);
+    localStorage.setItem('user', JSON.stringify(safeUser));
+    return { message: 'Registration successful', user: safeUser };
   },
 
   logout: () => {
@@ -49,7 +77,7 @@ const authService = {
   },
 
   getCurrentUser: async () => {
-    await new Promise((r) => setTimeout(r, 200));
+    await db.getAll('users');
     const stored = localStorage.getItem('user');
     return stored ? JSON.parse(stored) : null;
   },

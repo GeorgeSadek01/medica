@@ -30,8 +30,8 @@ export const loginUser = createAsyncThunk(
     try {
       const res = await authService.login(data);
       return res.user as User;
-    } catch {
-      return rejectWithValue('Invalid email or password');
+    } catch (err) {
+      return rejectWithValue(err instanceof Error ? err.message : 'Login failed');
     }
   },
 );
@@ -51,8 +51,8 @@ export const registerUser = createAsyncThunk(
     try {
       const res = await authService.register(data);
       return res.user as User;
-    } catch {
-      return rejectWithValue('Registration failed. Please try again.');
+    } catch (err) {
+      return rejectWithValue(err instanceof Error ? err.message : 'Registration failed');
     }
   },
 );

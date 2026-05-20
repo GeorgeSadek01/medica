@@ -1,6 +1,21 @@
-import mockDoctors from '../mock/doctors.json';
+import { db } from '../mock/db';
 
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+interface AvailabilitySlot {
+  id: number;
+  day: string;
+  start_time: string;
+  end_time: string;
+}
+
+interface Doctor {
+  id: number;
+  first_name: string;
+  last_name: string;
+  specialty: string;
+  bio: string;
+  contact: string;
+  availability: AvailabilitySlot[];
+}
 
 interface DoctorFilters {
   specialty?: string;
@@ -15,8 +30,7 @@ interface AvailabilityData {
 
 const doctorService = {
   getAll: async (filters?: DoctorFilters) => {
-    await delay(500);
-    let result = [...mockDoctors];
+    let result = await db.getAll<Doctor>('doctors');
     if (filters?.specialty) {
       result = result.filter((d) =>
         d.specialty.toLowerCase().includes(filters.specialty!.toLowerCase()),
@@ -31,28 +45,36 @@ const doctorService = {
   },
 
   getById: async (id: number) => {
-    await delay(400);
-    return mockDoctors.find((d) => d.id === id) ?? null;
+    return db.getById<Doctor>('doctors', id);
   },
 
   getAvailability: async (doctorId: number) => {
-    await delay(400);
-    const doctor = mockDoctors.find((d) => d.id === doctorId);
-    return doctor ? doctor.availability : [];
+    const doctor = await db.getById<Doctor>('doctors', doctorId);
+    return doctor?.availability ?? [];
   },
 
-  updateProfile: async (id: number, data: object) => {
-    await delay(400);
-    return { id, ...data };
+  updateProfile: async (id: number, data: Partial<Doctor>) => {
+    const updated = await db.update<Doctor>('doctors', id, data);
+    return updated ?? null;
   },
 
-  createAvailability: async (data: AvailabilityData) => {
-    await delay(400);
-    return { id: Math.floor(Math.random() * 1000), ...data };
+  createAvailability: async (doctorId: number, data: AvailabilityData) => {
+    const doctor = await db.getById<Doctor>('doctors', doctorId);
+    if (!doctor) throw new Error('Doctor not found');
+    const slots = doctor.availability ?? [];
+    const newSlotId = slots.length > 0 ? Math.max(...slots.map((s) => s.id)) + 1 : 1;
+    const newSlot = { id: newSlotId, ...data };
+    await db.update<Doctor>('doctors', doctorId, {
+      availability: [...slots, newSlot],
+    });
+    return newSlot;
   },
 
-  deleteAvailability: async (slotId: number) => {
-    await delay(400);
+  deleteAvailability: async (doctorId: number, slotId: number) => {
+    const doctor = await db.getById<Doctor>('doctors', doctorId);
+    if (!doctor) throw new Error('Doctor not found');
+    const slots = (doctor.availability ?? []).filter((s) => s.id !== slotId);
+    await db.update<Doctor>('doctors', doctorId, { availability: slots });
     return { deleted: true, id: slotId };
   },
 };

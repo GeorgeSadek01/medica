@@ -1,19 +1,20 @@
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+import { db } from '../mock/db';
 
 const patientService = {
   getProfile: async (_id: number) => {
-    await delay(300);
     const stored = localStorage.getItem('user');
     return stored ? JSON.parse(stored) : null;
   },
 
-  updateProfile: async (_id: number, data: object) => {
-    await delay(400);
-    const stored = localStorage.getItem('user');
-    const existing = stored ? JSON.parse(stored) : {};
-    const updated = { ...existing, ...data };
-    localStorage.setItem('user', JSON.stringify(updated));
-    return updated;
+  updateProfile: async (id: number, data: Record<string, unknown>) => {
+    const updated = await db.update('users', id, data);
+    if (updated) {
+      const safeUser = { ...updated } as Record<string, unknown>;
+      delete safeUser.password;
+      localStorage.setItem('user', JSON.stringify(safeUser));
+      return safeUser;
+    }
+    return null;
   },
 };
 

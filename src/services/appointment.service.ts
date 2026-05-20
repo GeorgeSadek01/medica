@@ -1,6 +1,19 @@
-import mockAppointments from '../mock/appointments.json';
+import { db } from '../mock/db';
 
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+interface Appointment {
+  id: number;
+  doctor: number;
+  doctor_name: string;
+  specialty: string;
+  patient: number;
+  patient_name: string;
+  date: string;
+  time_slot: number;
+  time: string;
+  status: string;
+  notes: string;
+  doctor_notes: string;
+}
 
 interface BookAppointmentData {
   doctor: number;
@@ -16,49 +29,59 @@ interface RescheduleData {
 
 const appointmentService = {
   getAll: async () => {
-    await delay(500);
-    return [...mockAppointments];
+    return db.getAll<Appointment>('appointments');
   },
 
   getById: async (id: number) => {
-    await delay(400);
-    const appointment = mockAppointments.find((a) => a.id === id) ?? null;
-    return appointment;
+    return db.getById<Appointment>('appointments', id);
   },
 
   book: async (data: BookAppointmentData) => {
-    await delay(600);
-    return {
-      id: Math.floor(Math.random() * 1000),
-      ...data,
+    return db.create<Appointment>('appointments', {
+      doctor: data.doctor,
+      doctor_name: '',
+      specialty: '',
+      patient: 0,
+      patient_name: '',
+      date: data.date,
+      time_slot: data.time_slot,
+      time: '',
       status: 'pending',
+      notes: data.notes ?? '',
       doctor_notes: '',
-    };
+    });
   },
 
   cancel: async (id: number) => {
-    await delay(400);
-    return { id, status: 'cancelled' };
+    const updated = await db.update<Appointment>('appointments', id, { status: 'cancelled' });
+    return updated ?? { id, status: 'cancelled' };
   },
 
   confirm: async (id: number) => {
-    await delay(400);
-    return { id, status: 'confirmed' };
+    const updated = await db.update<Appointment>('appointments', id, { status: 'confirmed' });
+    return updated ?? { id, status: 'confirmed' };
   },
 
   reject: async (id: number, notes?: string) => {
-    await delay(400);
-    return { id, status: 'cancelled', doctor_notes: notes ?? '' };
+    const updated = await db.update<Appointment>('appointments', id, {
+      status: 'cancelled',
+      doctor_notes: notes ?? '',
+    });
+    return updated ?? { id, status: 'cancelled', doctor_notes: notes ?? '' };
   },
 
   addNotes: async (id: number, notes: string) => {
-    await delay(400);
-    return { id, doctor_notes: notes };
+    const updated = await db.update<Appointment>('appointments', id, { doctor_notes: notes });
+    return updated ?? { id, doctor_notes: notes };
   },
 
   reschedule: async (id: number, data: RescheduleData) => {
-    await delay(500);
-    return { id, ...data, status: 'pending' };
+    const updated = await db.update<Appointment>('appointments', id, {
+      date: data.date,
+      time_slot: data.time_slot,
+      status: 'pending',
+    });
+    return updated ?? { id, ...data, status: 'pending' };
   },
 };
 

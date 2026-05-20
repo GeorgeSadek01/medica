@@ -1,43 +1,35 @@
-import mockDoctors from '../mock/doctors.json';
-import mockAppointments from '../mock/appointments.json';
-
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+import { db } from '../mock/db';
 
 const adminService = {
   getAllUsers: async () => {
-    await delay(500);
-    return [...mockDoctors];
+    return db.getAll('users');
   },
 
   toggleUserStatus: async (id: number, isActive: boolean) => {
-    await delay(400);
+    await db.update('users', id, { is_active: isActive });
     return { id, is_active: isActive };
   },
 
   getSpecialties: async () => {
-    await delay(400);
-    const unique = [...new Set(mockDoctors.map((d) => d.specialty))];
-    return unique.map((name, index) => ({ id: index + 1, name }));
+    return db.getAll('specialties');
   },
 
   createSpecialty: async (name: string) => {
-    await delay(400);
-    return { id: Math.floor(Math.random() * 1000), name };
+    return db.create('specialties', { name });
   },
 
   editSpecialty: async (id: number, name: string) => {
-    await delay(400);
+    await db.update('specialties', id, { name });
     return { id, name };
   },
 
   deleteSpecialty: async (id: number) => {
-    await delay(400);
+    await db.delete('specialties', id);
     return { deleted: true, id };
   },
 
   getAllAppointments: async () => {
-    await delay(500);
-    return [...mockAppointments];
+    return db.getAll('appointments');
   },
 };
 
