@@ -2,9 +2,14 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import AuthLayout from '../layouts/AuthLayout';
 import ProtectedRoute from '../components/ProtectedRoute';
+import PatientDashboard from '../pages/PatientDashboard';
 import HomePage from '../pages/HomePage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
+import DoctorResults from '../pages/DoctorResults';
+import DoctorProfile from '../pages/DoctorProfile';
+import AppointmentDetails from '../pages/AppointmentDetails';
+import PaymentPage from '../pages/PaymentPage';
 
 const router = createBrowserRouter([
   {
@@ -23,12 +28,20 @@ const router = createBrowserRouter([
     children: [
       {
         element: <MainLayout />,
-        children: [{ index: true, element: <HomePage /> }],
+        children: [
+          { index: true, element: <HomePage /> },
+          { path: 'dashboard/patient', element: <PatientDashboard /> },
+          { path: 'search/results', element: <DoctorResults /> },
+          { path: 'doctors/:id', element: <DoctorProfile /> },
+          { path: 'appointments/:id', element: <AppointmentDetails /> },
+          { path: 'payment/:id', element: <PaymentPage /> },
+        ],
       },
     ],
   },
   {
     path: '*',
+    
     element: <Navigate to="/" replace />,
   },
 ]);

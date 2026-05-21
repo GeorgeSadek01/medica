@@ -7,6 +7,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import store from './store';
 import router from './routes';
 import theme from './theme';
+import AppInit from './AppInit';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -14,7 +15,9 @@ createRoot(document.getElementById('root')!).render(
     <Provider store={store}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <RouterProvider router={router} />
+        <AppInit>
+          <RouterProvider router={router} />
+        </AppInit>
       </ThemeProvider>
     </Provider>
   </StrictMode>,

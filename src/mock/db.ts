@@ -25,7 +25,14 @@ function nextId<T extends Storable>(collection: T[]): number {
 }
 
 function seed(): void {
-  if (localStorage.getItem(SEED_KEY)) return;
+  if (localStorage.getItem(SEED_KEY)) {
+    // If seeded, ensure doctors have session_price. If not, update doctors collection.
+    const currentDoctors = getCollection('doctors');
+    if (currentDoctors.length > 0 && !('session_price' in currentDoctors[0])) {
+      localStorage.setItem(`${DB_PREFIX}doctors`, JSON.stringify(seedDoctors));
+    }
+    return;
+  }
 
   localStorage.setItem(`${DB_PREFIX}doctors`, JSON.stringify(seedDoctors));
   localStorage.setItem(`${DB_PREFIX}appointments`, JSON.stringify(seedAppointments));
@@ -89,6 +96,18 @@ export const db = {
     const newItem = { ...data, id: nextId(collection) } as T;
     collection.push(newItem);
     saveCollection(name, collection);
+    
+    if (name === 'appointments') {
+      try {
+        await fetch('/api/appointments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newItem)
+        });
+      } catch (e) {
+        console.error("Failed to save to appointments.json", e);
+      }
+    }
     return newItem;
   },
 
@@ -103,6 +122,18 @@ export const db = {
     if (index === -1) return null;
     collection[index] = { ...collection[index], ...data };
     saveCollection(name, collection);
+    
+    if (name === 'appointments') {
+      try {
+        await fetch(`/api/appointments/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      } catch (e) {
+        console.error("Failed to update appointments.json", e);
+      }
+    }
     return collection[index];
   },
 
