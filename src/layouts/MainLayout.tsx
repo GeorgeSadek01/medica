@@ -18,39 +18,39 @@ function MainLayout() {
     setMobileOpen(!mobileOpen);
   };
 
- return (
-  <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}>
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}>
 
-    <Navbar onSidebarToggle={handleDrawerToggle} />
+      <Navbar onSidebarToggle={handleDrawerToggle} />
 
-    <Box sx={{ display: 'flex', flexGrow: 1 }}>
+      <Box sx={{ display: 'flex', flexGrow: 1 }}>
 
-      <Sidebar
-        open={isDesktop ? true : mobileOpen}
-        onClose={handleDrawerToggle}
-        variant={isDesktop ? 'permanent' : 'temporary'}
-      />
+        <Sidebar
+          open={isDesktop ? true : mobileOpen}
+          onClose={handleDrawerToggle}
+          variant={isDesktop ? 'permanent' : 'temporary'}
+        />
 
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          display: 'flex',
-          flexDirection: 'column',
-          width: { md: `calc(100% - ${DRAWER_WIDTH}px)`, xs: '100%' },
-          minWidth: 0,
-        }}
-      >
-        <Box sx={{ flexGrow: 1 }}>
-          <Outlet />
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            width: { md: `calc(100% - ${DRAWER_WIDTH}px)`, xs: '100%' },
+            minWidth: 0,
+          }}
+        >
+          <Box sx={{ flexGrow: 1 }}>
+            <Outlet />
+          </Box>
+          <Footer />
         </Box>
-        <Footer />
-      </Box>
 
+      </Box>
     </Box>
-  </Box>
-);
+  );
 }
 
 export default MainLayout;
