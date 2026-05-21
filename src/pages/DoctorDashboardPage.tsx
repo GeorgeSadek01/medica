@@ -3,9 +3,10 @@ import {
   Box,
   Typography,
   Grid,
-  Paper,
   Card,
   CardContent,
+  CircularProgress,
+  Paper,
   Table,
   TableBody,
   TableCell,
@@ -13,24 +14,12 @@ import {
   TableHead,
   TableRow,
   Chip,
-  Button,
-  IconButton,
-  CircularProgress,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Tooltip,
 } from '@mui/material';
 
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import PendingActionsIcon from '@mui/icons-material/PendingActions';
-import CheckIcon from '@mui/icons-material/Check';
-import CloseIcon from '@mui/icons-material/Close';
-import NoteAddIcon from '@mui/icons-material/NoteAdd';
+import CancelIcon from '@mui/icons-material/Cancel';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import DescriptionIcon from '@mui/icons-material/Description';
 
 import appointmentService from '../services/appointment.service';
@@ -42,12 +31,11 @@ interface Appointment {
   id: number;
   doctor: number;
   doctor_name: string;
-  specialty: string;
   patient: number;
   patient_name: string;
   date: string;
-  time_slot: number;
   time: string;
+  time_slot: number;
   status: string;
   notes: string;
   doctor_notes: string;
@@ -57,11 +45,7 @@ export default function DoctorDashboardPage() {
   const { user } = useAppSelector(selectAuth);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [alertMessage, setAlertMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
-  const [selectedApp, setSelectedApp] = useState<Appointment | null>(null);
-  const [isNotesOpen, setIsNotesOpen] = useState(false);
-  const [doctorNotes, setDoctorNotes] = useState('');
+  const [doctorName, setDoctorName] = useState('Doctor');
 
   const fetchDashboardData = async () => {
     try {
@@ -74,7 +58,8 @@ export default function DoctorDashboardPage() {
       );
 
       if (currentDoctor) {
-        const doctorAppointments = allAppointments.filter((app) => app.doctor === currentDoctor.id);
+        setDoctorName(`Dr. ${currentDoctor.first_name} ${currentDoctor.last_name}`);
+        const doctorAppointments = allAppointments.filter((app) => Number(app.doctor) === Number(currentDoctor.id));
         setAppointments(doctorAppointments);
       } else {
         setAppointments(allAppointments);
@@ -91,63 +76,20 @@ export default function DoctorDashboardPage() {
   }, [user]);
 
   const totalBookings = appointments.length;
-  const pendingCount = appointments.filter((a) => a.status === 'pending').length;
-  const confirmedCount = appointments.filter((a) => a.status === 'confirmed').length;
+  const confirmedAppointments = appointments.filter((a) => a.status === 'confirmed' || a.status === 'completed');
+  const cancelledAppointments = appointments.filter((a) => a.status === 'cancelled');
 
-  const upcomingAppointments = appointments.filter((a) => a.status === 'pending' || a.status === 'confirmed');
-  const pastAppointments = appointments.filter((a) => a.status === 'completed' || a.status === 'cancelled');
-
-  const handleApprove = async (id: number) => {
-    try {
-      await appointmentService.confirm(id);
-      setAlertMessage({ type: 'success', text: 'Appointment status marked as confirmed! 🚀' });
-      fetchDashboardData();
-    } catch (error) {
-      setAlertMessage({ type: 'error', text: 'Action failed.' });
-    }
-  };
-
-  // Reject (Task 3)
-  const handleReject = async (id: number) => {
-    try {
-      await appointmentService.reject(id, 'Cancelled by doctor');
-      setAlertMessage({ type: 'success', text: 'Appointment request has been rejected.' });
-      fetchDashboardData();
-    } catch (error) {
-      setAlertMessage({ type: 'error', text: 'Action failed.' });
-    }
-  };
-
-  const handleOpenNotesModal = (app: Appointment) => {
-    setSelectedApp(app);
-    setDoctorNotes(app.doctor_notes || '');
-    setIsNotesOpen(true);
-  };
-
-  const handleSaveNotes = async () => {
-    if (!selectedApp) return;
-    try {
-      await appointmentService.addNotes(selectedApp.id, doctorNotes);
-      await appointmentService.db.update('appointments', selectedApp.id, { status: 'completed' });
-      
-      setAlertMessage({ type: 'success', text: 'Notes updated and appointment closed successfully!' });
-      setIsNotesOpen(false);
-      setSelectedApp(null);
-      fetchDashboardData();
-    } catch (error) {
-      setAlertMessage({ type: 'error', text: 'Could not append notes.' });
-    }
-  };
+  const confirmedCount = confirmedAppointments.length;
+  const cancelledCount = cancelledAppointments.length;
 
   const getStatusChip = (status: string) => {
-    const configs: Record<string, { label: string; color: 'warning' | 'success' | 'error' | 'info' | 'default' }> = {
-      pending: { label: 'Pending', color: 'warning' },
+    const configs: Record<string, { label: string; color: 'success' | 'error' | 'info' | 'default' }> = {
       confirmed: { label: 'Confirmed', color: 'success' },
       cancelled: { label: 'Cancelled', color: 'error' },
       completed: { label: 'Completed', color: 'info' },
     };
     const config = configs[status] || { label: status, color: 'default' };
-    return <Chip label={config.label} color={config.color} size="small" variant="outlined" sx={{ fontWeight: 'bold' }} />;
+    return <Chip label={config.label} color={config.color} size="small" sx={{ fontWeight: 'bold' }} />;
   };
 
   if (loading) {
@@ -160,23 +102,26 @@ export default function DoctorDashboardPage() {
 
   return (
     <Box sx={{ flexGrow: 1, p: 2 }}>
-      <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1, color: 'primary.main' }}>
-        Doctor Dashboard
-      </Typography>
-      {alertMessage && (
-        <Alert severity={alertMessage.type} sx={{ mb: 3, borderRadius: 2 }} onClose={() => setAlertMessage(null)}>
-          {alertMessage.text}
-        </Alert>
-      )}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <LocalHospitalIcon fontSize="large" /> {doctorName} Dashboard
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
+          Welcome back! Real-time overview of your practice statistics and schedule.
+        </Typography>
+      </Box>
 
-      {/* 📊 1. Appointment statistics cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 5 }}>
         <Grid item xs={12} sm={4}>
-          <Card elevation={2} sx={{ borderLeft: '5px solid #1976d2', borderRadius: 3 }}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Card elevation={2} sx={{ borderLeft: '6px solid #1976d2', borderRadius: 4 }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2.5 }}>
               <Box>
-                <Typography color="text.secondary" variant="body2" sx={{ fontWeight: 600 }}>Total Bookings</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 0.5 }}>{totalBookings}</Typography>
+                <Typography color="text.secondary" variant="subtitle2" sx={{ fontWeight: 700, textTransform: 'uppercase' }}>
+                  Total Bookings
+                </Typography>
+                <Typography variant="h3" sx={{ fontWeight: 'bold', mt: 0.5, color: '#1976d2' }}>
+                  {totalBookings}
+                </Typography>
               </Box>
               <CalendarTodayIcon sx={{ fontSize: 40, color: '#1976d2', opacity: 0.7 }} />
             </CardContent>
@@ -184,88 +129,71 @@ export default function DoctorDashboardPage() {
         </Grid>
 
         <Grid item xs={12} sm={4}>
-          <Card elevation={2} sx={{ borderLeft: '5px solid #ed6c02', borderRadius: 3 }}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Card elevation={2} sx={{ borderLeft: '6px solid #2e7d32', borderRadius: 4 }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2.5 }}>
               <Box>
-                <Typography color="text.secondary" variant="body2" sx={{ fontWeight: 600 }}>Pending Review</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 0.5 }}>{pendingCount}</Typography>
+                <Typography color="text.secondary" variant="subtitle2" sx={{ fontWeight: 700, textTransform: 'uppercase' }}>
+                  Confirmed Slots
+                </Typography>
+                <Typography variant="h3" sx={{ fontWeight: 'bold', mt: 0.5, color: '#2e7d32' }}>
+                  {confirmedCount}
+                </Typography>
               </Box>
-              <PendingActionsIcon sx={{ fontSize: 40, color: '#ed6c02', opacity: 0.7 }} />
+              <CheckCircleIcon sx={{ fontSize: 40, color: '#2e7d32', opacity: 0.7 }} />
             </CardContent>
           </Card>
         </Grid>
 
         <Grid item xs={12} sm={4}>
-          <Card elevation={2} sx={{ borderLeft: '5px solid #2e7d32', borderRadius: 3 }}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Card elevation={2} sx={{ borderLeft: '6px solid #d32f2f', borderRadius: 4 }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2.5 }}>
               <Box>
-                <Typography color="text.secondary" variant="body2" sx={{ fontWeight: 600 }}>Confirmed Slots</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 0.5 }}>{confirmedCount}</Typography>
+                <Typography color="text.secondary" variant="subtitle2" sx={{ fontWeight: 700, textTransform: 'uppercase' }}>
+                  Cancelled Slots
+                </Typography>
+                <Typography variant="h3" sx={{ fontWeight: 'bold', mt: 0.5, color: '#d32f2f' }}>
+                  {cancelledCount}
+                </Typography>
               </Box>
-              <CheckCircleIcon sx={{ fontSize: 40, color: '#2e7d32', opacity: 0.7 }} />
+              <CancelIcon sx={{ fontSize: 40, color: '#d32f2f', opacity: 0.7 }} />
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
       <Grid container spacing={4}>
+        
         <Grid item xs={12}>
-          <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
+          <Paper elevation={2} sx={{ p: 3, borderRadius: 4 }}>
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: 'primary.main' }}>
-              Upcoming & Active Requests
+              Active & Confirmed Schedule
             </Typography>
-            {upcomingAppointments.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">No upcoming appointments found.</Typography>
+            {confirmedAppointments.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ py: 2, fontStyle: 'italic' }}>
+                No active or confirmed appointments found for your profile.
+              </Typography>
             ) : (
               <TableContainer>
-                <Table>
-                  <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+                <Table size="small">
+                  <TableHead sx={{ backgroundColor: '#f8fafc' }}>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Patient Name</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', py: 1.5 }}>Patient Name</TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>Time Slot</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Patient Notes</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Patient Message</TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {upcomingAppointments.map((app) => (
+                    {confirmedAppointments.map((app) => (
                       <TableRow key={app.id} hover>
-                        <TableCell sx={{ fontWeight: 500 }}>{app.patient_name || `Patient #${app.patient}`}</TableCell>
+                        <TableCell sx={{ fontWeight: 500, py: 1.5 }}>{app.patient_name || `Patient #${app.patient}`}</TableCell>
                         <TableCell>{app.date}</TableCell>
                         <TableCell>{app.time || `Slot ${app.time_slot}`}</TableCell>
-                        <TableCell>{app.notes || '—'}</TableCell>
-                        <TableCell>{getStatusChip(app.status)}</TableCell>
-                        <TableCell align="right">
-                          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                            {app.status === 'pending' && (
-                              <>
-                                <Tooltip title="Approve">
-                                  <IconButton color="success" onClick={() => handleApprove(app.id)}>
-                                    <CheckIcon />
-                                  </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Reject">
-                                  <IconButton color="error" onClick={() => handleReject(app.id)}>
-                                    <CloseIcon />
-                                  </IconButton>
-                                </Tooltip>
-                              </>
-                            )}
-                            {app.status === 'confirmed' && (
-                              <Button
-                                variant="contained"
-                                size="small"
-                                startIcon={<NoteAddIcon />}
-                                onClick={() => handleOpenNotesModal(app)}
-                                sx={{ textTransform: 'none', fontWeight: 'bold', borderRadius: 1.5 }}
-                              >
-                                Add Notes & Complete
-                              </Button>
-                            )}
-                          </Box>
+                        <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {app.notes || '—'}
                         </TableCell>
+                        <TableCell>{getStatusChip(app.status)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -276,35 +204,37 @@ export default function DoctorDashboardPage() {
         </Grid>
 
         <Grid item xs={12}>
-          <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
+          <Paper elevation={2} sx={{ p: 3, borderRadius: 4 }}>
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: 'text.secondary' }}>
-              History & Past Appointments
+              Past & Cancelled History
             </Typography>
-            {pastAppointments.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">No past appointment history.</Typography>
+            {cancelledAppointments.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ py: 2, fontStyle: 'italic' }}>
+                No cancelled or past appointment logs.
+              </Typography>
             ) : (
               <TableContainer>
-                <Table>
-                  <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+                <Table size="small">
+                  <TableHead sx={{ backgroundColor: '#f8fafc' }}>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Patient Name</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', py: 1.5 }}>Patient Name</TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>Time Slot</TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Doctor Notes</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Doctor Logs / Diagnosis</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {pastAppointments.map((app) => (
+                    {cancelledAppointments.map((app) => (
                       <TableRow key={app.id} hover>
-                        <TableCell>{app.patient_name || `Patient #${app.patient}`}</TableCell>
+                        <TableCell sx={{ py: 1.5 }}>{app.patient_name || `Patient #${app.patient}`}</TableCell>
                         <TableCell>{app.date}</TableCell>
                         <TableCell>{app.time || `Slot ${app.time_slot}`}</TableCell>
                         <TableCell>{getStatusChip(app.status)}</TableCell>
                         <TableCell sx={{ maxWidth: 250, fontStyle: app.doctor_notes ? 'normal' : 'italic', color: 'text.secondary' }}>
                           {app.doctor_notes ? (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <DescriptionIcon sx={{ fontSize: 16 }} />
+                              <DescriptionIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
                               {app.doctor_notes}
                             </Box>
                           ) : (
@@ -319,31 +249,8 @@ export default function DoctorDashboardPage() {
             )}
           </Paper>
         </Grid>
-      </Grid>
 
-      <Dialog open={isNotesOpen} onClose={() => setIsNotesOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ fontWeight: 'bold' }}>Add Visit Notes</DialogTitle>
-        <DialogContent sx={{ pt: 1 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Patient: <strong>{selectedApp?.patient_name}</strong>
-          </Typography>
-          <TextField
-            label="Doctor Notes"
-            fullWidth
-            multiline
-            rows={4}
-            value={doctorNotes}
-            onChange={(e) => setDoctorNotes(e.target.value)}
-            placeholder="Write clinical findings or notes..."
-          />
-        </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setIsNotesOpen(false)} sx={{ textTransform: 'none' }}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveNotes} disabled={!doctorNotes.trim()} sx={{ textTransform: 'none', fontWeight: 'bold' }}>
-            Save & Complete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      </Grid>
     </Box>
   );
 }

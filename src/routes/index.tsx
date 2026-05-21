@@ -7,6 +7,8 @@ import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import DoctorProfilePage from '../pages/DoctorProfilePage';
 import DoctorDashboardPage from '../pages/DoctorDashboardPage';
+import DoctorAppointmentsPage from '../pages/DoctorAppointmentsPage';
+import DoctorAvailabilityPage from '../pages/DoctorAvailabilityPage';
 const router = createBrowserRouter([
   {
     path: '/login',
@@ -28,6 +30,8 @@ const router = createBrowserRouter([
           { index: true, element: <HomePage /> },
           { path: 'doctor/profile', element: <DoctorProfilePage /> },
           { path: 'doctor/dashboard', element: <DoctorDashboardPage /> },
+          { path: 'doctor/appointments', element: <DoctorAppointmentsPage /> },
+          { path: 'doctor/availability', element: <DoctorAvailabilityPage /> },
         ],
       },
     ],
