@@ -18,41 +18,39 @@ function MainLayout() {
     setMobileOpen(!mobileOpen);
   };
 
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}>
-      
-      <Box sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <Navbar onSidebarToggle={handleDrawerToggle} />
-      </Box>
+ return (
+  <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}>
 
-      <Box sx={{ display: 'flex', flexGrow: 1, pt: '64px' }}>
-        
-        <Sidebar
-          open={isDesktop ? true : mobileOpen}
-          onClose={handleDrawerToggle}
-          variant={isDesktop ? 'permanent' : 'temporary'}
-        />
+    <Navbar onSidebarToggle={handleDrawerToggle} />
 
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            p: 3,
-            display: 'flex',
-            flexDirection: 'column',
-            width: { md: `calc(100% - ${DRAWER_WIDTH}px)`, xs: '100%' },
-            minWidth: 0,
-          }}
-        >
-          <Box sx={{ flexGrow: 1 }}>
-            <Outlet />
-          </Box>
-          <Footer />
+    <Box sx={{ display: 'flex', flexGrow: 1 }}>
+
+      <Sidebar
+        open={isDesktop ? true : mobileOpen}
+        onClose={handleDrawerToggle}
+        variant={isDesktop ? 'permanent' : 'temporary'}
+      />
+
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          display: 'flex',
+          flexDirection: 'column',
+          width: { md: `calc(100% - ${DRAWER_WIDTH}px)`, xs: '100%' },
+          minWidth: 0,
+        }}
+      >
+        <Box sx={{ flexGrow: 1 }}>
+          <Outlet />
         </Box>
-
+        <Footer />
       </Box>
+
     </Box>
-  );
+  </Box>
+);
 }
 
 export default MainLayout;
