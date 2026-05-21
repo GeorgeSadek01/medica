@@ -44,6 +44,7 @@ function seed(): void {
     first_name: string;
     last_name: string;
     role: 'doctor' | 'patient';
+    phone?: string;
   }> = seedDoctors.map((doc) => ({
     id: doc.id,
     email: doc.contact,
@@ -59,6 +60,8 @@ function seed(): void {
     first_name: 'Default',
     last_name: 'Patient',
     role: 'patient',
+    phone: '',
+    avatar: '',
   });
   localStorage.setItem(`${DB_PREFIX}users`, JSON.stringify(doctorUsers));
 

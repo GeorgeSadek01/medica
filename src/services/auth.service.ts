@@ -7,6 +7,8 @@ interface User extends Storable {
   first_name: string;
   last_name: string;
   role: 'patient' | 'doctor';
+  phone?: string;
+  avatar?: string;
 }
 
 interface LoginData {
@@ -29,6 +31,8 @@ function omitPassword(user: User): Omit<User, 'password'> {
     first_name: user.first_name,
     last_name: user.last_name,
     role: user.role,
+    phone: user.phone,
+    avatar: user.avatar,
   };
 }
 
