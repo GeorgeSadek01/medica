@@ -6,7 +6,7 @@ import HomePage from '../pages/HomePage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import DoctorProfilePage from '../pages/DoctorProfilePage';
-
+import DoctorDashboardPage from '../pages/DoctorDashboardPage';
 const router = createBrowserRouter([
   {
     path: '/login',
@@ -27,6 +27,7 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <HomePage /> },
           { path: 'doctor/profile', element: <DoctorProfilePage /> },
+          { path: 'doctor/dashboard', element: <DoctorDashboardPage /> },
         ],
       },
     ],
