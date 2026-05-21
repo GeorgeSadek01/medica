@@ -31,7 +31,7 @@ const doctorLinks = [
   { label: 'Dashboard',    path: '/doctor/dashboard',    icon: <DashboardIcon /> },
   { label: 'Appointments', path: '/doctor/appointments', icon: <CalendarMonthIcon /> },
   { label: 'Availability', path: '/doctor/availability', icon: <EventAvailableIcon /> },
-  { label: 'My Profile',   path: '/profile',             icon: <PersonIcon /> },
+  { label: 'My Profile',   path: 'doctor/profile',             icon: <PersonIcon /> },
 ];
 
 const adminLinks = [

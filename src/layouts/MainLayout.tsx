@@ -19,12 +19,19 @@ function MainLayout() {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+        bgcolor: 'background.default',
+      }}
+    >
+      <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+        <Navbar onSidebarToggle={handleDrawerToggle} />
+      </Box>
 
-      <Navbar onSidebarToggle={handleDrawerToggle} />
-
-      <Box sx={{ display: 'flex', flexGrow: 1 }}>
-
+      <Box sx={{ display: 'flex', flexGrow: 1, pt: '64px' }}>
         <Sidebar
           open={isDesktop ? true : mobileOpen}
           onClose={handleDrawerToggle}
@@ -40,6 +47,7 @@ function MainLayout() {
             flexDirection: 'column',
             width: { md: `calc(100% - ${DRAWER_WIDTH}px)`, xs: '100%' },
             minWidth: 0,
+            backgroundColor: '#f9fafb',
           }}
         >
           <Box sx={{ flexGrow: 1 }}>
@@ -47,7 +55,6 @@ function MainLayout() {
           </Box>
           <Footer />
         </Box>
-
       </Box>
     </Box>
   );

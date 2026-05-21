@@ -12,6 +12,9 @@ import DoctorResults from '../pages/DoctorResults';
 import DoctorProfile from '../pages/DoctorProfile';
 import AppointmentDetails from '../pages/AppointmentDetails';
 import PaymentPage from '../pages/PaymentPage';
+import DoctorDashboardPage from '../pages/DoctorDashboardPage';
+import DoctorAppointmentsPage from '../pages/DoctorAppointmentsPage';
+import DoctorAvailabilityPage from '../pages/DoctorAvailabilityPage';
 
 const router = createBrowserRouter([
   {
@@ -39,6 +42,9 @@ const router = createBrowserRouter([
           { path: 'profile/patient', element: <PatientProfile /> },
           { path: 'appointments/:id', element: <AppointmentDetails /> },
           { path: 'payment/:id', element: <PaymentPage /> },
+          { path: 'doctor/dashboard', element: <DoctorDashboardPage /> },
+          { path: 'doctor/appointments', element: <DoctorAppointmentsPage /> },
+          { path: 'doctor/availability', element: <DoctorAvailabilityPage /> },
         ],
       },
     ],
