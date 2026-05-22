@@ -15,18 +15,9 @@ import PhoneIcon from '@mui/icons-material/Phone';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 
 import doctorService from '../services/doctor.service';
+import adminService from '../services/admin.service';
 import { useAppSelector } from '../store';
 import { selectAuth } from '../store/authSlice';
-
-const MEDICAL_SPECIALTIES = [
-  'Cardiology',
-  'Dermatology',
-  'Pediatrics',
-  'Orthopedics',
-  'Ophthalmology',
-  'Neurology',
-  'General Medicine',
-];
 
 interface ProfileFormData {
   first_name: string;
@@ -50,6 +41,7 @@ export default function DoctorProfilePage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [specialtiesList, setSpecialtiesList] = useState<string[]>([]);
 
   // Validation
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -63,7 +55,13 @@ export default function DoctorProfilePage() {
     const initDoctorProfile = async () => {
       try {
         setLoading(true);
-        const allDoctors = await doctorService.getAll().catch(() => []);
+        const [allDoctors, specs] = await Promise.all([
+          doctorService.getAll().catch(() => []),
+          adminService.getSpecialties().catch(() => []),
+        ]);
+
+        const specNames = (specs as { name: string }[]).map((s) => s.name).sort();
+        setSpecialtiesList(specNames);
 
         const currentDoctor = allDoctors.find(
           (d) =>
@@ -73,13 +71,17 @@ export default function DoctorProfilePage() {
 
         if (currentDoctor) {
           setDoctorId(currentDoctor.id);
+          const docSpecialty = currentDoctor.specialty || 'General Medicine';
           setFormData({
             first_name: currentDoctor.first_name,
             last_name: currentDoctor.last_name,
-            specialty: currentDoctor.specialty || 'General Medicine',
+            specialty: docSpecialty,
             bio: currentDoctor.bio || '',
             contact: currentDoctor.contact,
           });
+          if (docSpecialty && !specNames.includes(docSpecialty)) {
+            setSpecialtiesList((prev) => [...prev, docSpecialty].sort());
+          }
         } else if (user) {
           setFormData({
             first_name: user.first_name || 'Ahmed',
@@ -153,6 +155,12 @@ export default function DoctorProfilePage() {
           bio: formData.bio,
           contact: formData.contact,
         });
+
+        if (formData.specialty && !specialtiesList.includes(formData.specialty)) {
+          await adminService.createSpecialty(formData.specialty).catch(() => {});
+          setSpecialtiesList((prev) => [...prev, formData.specialty].sort());
+        }
+
         setAlertMessage({ type: 'success', text: 'Profile information saved successfully! 🎉' });
       } else {
         setAlertMessage({ type: 'success', text: 'Profile changes applied locally!' });
@@ -222,7 +230,7 @@ export default function DoctorProfilePage() {
                 },
               }}
             >
-              {MEDICAL_SPECIALTIES.map((option) => (
+              {specialtiesList.map((option) => (
                 <MenuItem key={option} value={option}>
                   {option}
                 </MenuItem>

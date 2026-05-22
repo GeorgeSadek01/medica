@@ -74,7 +74,7 @@ const authService = {
       await db.create('doctors', {
         first_name: rest.first_name,
         last_name: rest.last_name,
-        specialty: '',
+        specialty: 'General Medicine',
         bio: '',
         contact: rest.email,
         availability: [],
