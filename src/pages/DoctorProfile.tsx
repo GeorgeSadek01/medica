@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Paper, Button } from '@mui/material';
 import BookingModal from '../components/BookingModal';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import doctorService from '../services/doctor.service';
+import { useAppSelector } from '../store';
+import { selectUser } from '../store/authSlice';
 
 interface Doctor {
   id: number;
@@ -15,6 +17,8 @@ interface Doctor {
 
 const DoctorProfile: React.FC = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const user = useAppSelector(selectUser);
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [loading, setLoading] = useState(true);
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -45,7 +49,17 @@ const DoctorProfile: React.FC = () => {
             Session Price: {doctor.session_price} EGP
           </Typography>
         )}
-        <Button sx={{ mt: 2 }} variant="contained" onClick={() => setBookingOpen(true)}>
+        <Button
+          sx={{ mt: 2 }}
+          variant="contained"
+          onClick={() => {
+            if (!user) {
+              navigate('/login?message=Please sign in to book an appointment.');
+              return;
+            }
+            setBookingOpen(true);
+          }}
+        >
           Book Appointment
         </Button>
         <BookingModal

@@ -1,0 +1,70 @@
+[
+  {
+    "id": 1,
+    "email": "ahmed.hassan@medica.com",
+    "password": "password123",
+    "first_name": "Ahmed",
+    "last_name": "Hassan",
+    "role": "doctor",
+    "phone": "",
+    "avatar": "",
+    "is_active": true
+  },
+  {
+    "id": 2,
+    "email": "sara.mohamed@medica.com",
+    "password": "password123",
+    "first_name": "Sara",
+    "last_name": "Mohamed",
+    "role": "doctor",
+    "phone": "",
+    "avatar": ""
+  },
+  {
+    "id": 3,
+    "email": "omar.ali@medica.com",
+    "password": "password123",
+    "first_name": "Omar",
+    "last_name": "Ali",
+    "role": "doctor",
+    "phone": "",
+    "avatar": ""
+  },
+  {
+    "id": 4,
+    "email": "layla.ibrahim@medica.com",
+    "password": "password123",
+    "first_name": "Layla",
+    "last_name": "Ibrahim",
+    "role": "doctor",
+    "phone": "",
+    "avatar": ""
+  },
+  {
+    "id": 5,
+    "email": "patient@medica.com",
+    "password": "password123",
+    "first_name": "Default",
+    "last_name": "Patient",
+    "role": "patient",
+    "phone": "",
+    "avatar": ""
+  },
+  {
+    "id": 6,
+    "email": "admin@medica.com",
+    "password": "password123",
+    "first_name": "Admin",
+    "last_name": "User",
+    "role": "admin",
+    "phone": ""
+  },
+  {
+    "email": "omar@gmail.com",
+    "password": "Ppassword123",
+    "first_name": "omar",
+    "last_name": "abdelsatar",
+    "role": "admin",
+    "id": 9
+  }
+]

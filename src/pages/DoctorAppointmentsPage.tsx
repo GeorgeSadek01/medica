@@ -24,7 +24,6 @@ import {
   ListItemText,
 } from '@mui/material';
 
-import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -100,25 +99,6 @@ export default function DoctorAppointmentsPage() {
   const handleMenuClose = () => {
     setAnchorEl(null);
     setActiveApp(null);
-  };
-
-  const handleSelectConfirm = async () => {
-    if (!activeApp) return;
-    const appId = activeApp.id;
-    handleMenuClose();
-    try {
-      await appointmentService.confirm(appId);
-
-      await appointmentService.addNotes(appId, '');
-
-      setAlert({
-        type: 'success',
-        text: 'Appointment status updated to Confirmed and notes cleared! ',
-      });
-      loadAppointments();
-    } catch {
-      setAlert({ type: 'error', text: 'Failed to confirm appointment.' });
-    }
   };
 
   const handleSelectReject = async () => {
@@ -197,7 +177,6 @@ export default function DoctorAppointmentsPage() {
                 <TableCell sx={{ fontWeight: 'bold' }}>Patient Name</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Time / Slot</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Patient Message</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Doctor Diagnosis</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>Actions</TableCell>
@@ -206,7 +185,7 @@ export default function DoctorAppointmentsPage() {
             <TableBody>
               {appointments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 3, color: 'text.secondary' }}>
                     No appointments associated with your profile yet.
                   </TableCell>
                 </TableRow>
@@ -218,16 +197,6 @@ export default function DoctorAppointmentsPage() {
                     </TableCell>
                     <TableCell>{app.date}</TableCell>
                     <TableCell>{app.time || `Slot ${app.time_slot}`}</TableCell>
-                    <TableCell
-                      sx={{
-                        maxWidth: 150,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {app.notes || '—'}
-                    </TableCell>
                     <TableCell>{getStatusChip(app.status)}</TableCell>
                     <TableCell
                       sx={{
@@ -274,16 +243,6 @@ export default function DoctorAppointmentsPage() {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <MenuItem onClick={handleSelectConfirm} sx={{ color: 'success.main' }}>
-          <ListItemIcon>
-            <CheckIcon fontSize="small" color="success" />
-          </ListItemIcon>
-          <ListItemText
-            primary="Approve & Confirm"
-            primaryTypographyProps={{ fontWeight: '500' }}
-          />
-        </MenuItem>
-
         <MenuItem onClick={handleSelectReject} sx={{ color: 'error.main' }}>
           <ListItemIcon>
             <CloseIcon fontSize="small" color="error" />

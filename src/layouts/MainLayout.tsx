@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
+import type { ReactNode } from 'react';
 import Box from '@mui/material/Box';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
@@ -9,7 +10,7 @@ import Footer from '../components/shared/Footer';
 
 const DRAWER_WIDTH = 240;
 
-function MainLayout() {
+function MainLayout({ children }: { children?: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
@@ -59,7 +60,7 @@ function MainLayout() {
           }}
         >
           <Box sx={{ flexGrow: 1 }}>
-            <Outlet />
+            {children ?? <Outlet />}
           </Box>
           <Footer />
         </Box>

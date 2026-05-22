@@ -36,6 +36,8 @@ function omitPassword(user: User): Omit<User, 'password'> {
   };
 }
 
+const SESSION_KEY = 'medica_session_userId';
+
 const authService = {
   login: async (data: LoginData) => {
     const user = await db.find<User>(
@@ -48,7 +50,7 @@ const authService = {
     const safeUser = omitPassword(user);
     localStorage.setItem('accessToken', 'mock_access_token_123');
     localStorage.setItem('refreshToken', 'mock_refresh_token_456');
-    localStorage.setItem('user', JSON.stringify(safeUser));
+    localStorage.setItem(SESSION_KEY, String(safeUser.id));
     return {
       access: 'mock_access_token_123',
       refresh: 'mock_refresh_token_456',
@@ -84,20 +86,21 @@ const authService = {
     }
 
     const safeUser = omitPassword(newUser);
-    localStorage.setItem('user', JSON.stringify(safeUser));
+    localStorage.setItem(SESSION_KEY, String(safeUser.id));
     return { message: 'Registration successful', user: safeUser };
   },
 
   logout: () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
+    localStorage.removeItem(SESSION_KEY);
   },
 
   getCurrentUser: async () => {
-    await db.getAll('users');
-    const stored = localStorage.getItem('user');
-    return stored ? JSON.parse(stored) : null;
+    const userId = localStorage.getItem(SESSION_KEY);
+    if (!userId) return null;
+    const user = await db.getById<User>('users', Number(userId));
+    return user ? omitPassword(user) : null;
   },
 };
 

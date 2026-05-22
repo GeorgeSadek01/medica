@@ -1,5 +1,6 @@
 import seedDoctors from './doctors.json';
 import seedAppointments from './appointments.json';
+import seedUsers from './users.json';
 
 const DB_PREFIX = 'medica_db_';
 const SEED_KEY = `${DB_PREFIX}_seeded`;
@@ -26,68 +27,16 @@ function nextId<T extends Storable>(collection: T[]): number {
 
 function seed(): void {
   if (localStorage.getItem(SEED_KEY)) {
-    // If seeded, ensure doctors have session_price. If not, update doctors collection.
     const currentDoctors = getCollection('doctors');
     if (currentDoctors.length > 0 && !('session_price' in currentDoctors[0])) {
       localStorage.setItem(`${DB_PREFIX}doctors`, JSON.stringify(seedDoctors));
-    }
-    // Ensure admin user exists (added after initial seed)
-    const users = getCollection('users');
-    if (!users.find((u: any) => u.email === 'admin@medica.com')) {
-      const maxId = Math.max(...users.map((u: any) => u.id), 0);
-      users.push({
-        id: maxId + 1,
-        email: 'admin@medica.com',
-        password: 'password123',
-        first_name: 'Admin',
-        last_name: 'User',
-        role: 'admin',
-        phone: '',
-      } as any);
-      saveCollection('users', users);
     }
     return;
   }
 
   localStorage.setItem(`${DB_PREFIX}doctors`, JSON.stringify(seedDoctors));
   localStorage.setItem(`${DB_PREFIX}appointments`, JSON.stringify(seedAppointments));
-
-  const doctorUsers: Array<{
-    id: number;
-    email: string;
-    password: string;
-    first_name: string;
-    last_name: string;
-    role: 'doctor' | 'patient' | 'admin';
-    phone?: string;
-  }> = seedDoctors.map((doc) => ({
-    id: doc.id,
-    email: doc.contact,
-    password: 'password123',
-    first_name: doc.first_name,
-    last_name: doc.last_name,
-    role: 'doctor',
-  }));
-  doctorUsers.push({
-    id: doctorUsers.length + 1,
-    email: 'patient@medica.com',
-    password: 'password123',
-    first_name: 'Default',
-    last_name: 'Patient',
-    role: 'patient',
-    phone: '',
-    avatar: '',
-  });
-  doctorUsers.push({
-    id: doctorUsers.length + 1,
-    email: 'admin@medica.com',
-    password: 'password123',
-    first_name: 'Admin',
-    last_name: 'User',
-    role: 'admin',
-    phone: '',
-  });
-  localStorage.setItem(`${DB_PREFIX}users`, JSON.stringify(doctorUsers));
+  localStorage.setItem(`${DB_PREFIX}users`, JSON.stringify(seedUsers));
 
   const specialties = [...new Set(seedDoctors.map((d) => d.specialty))].map((name, i) => ({
     id: i + 1,
@@ -124,15 +73,16 @@ export const db = {
     collection.push(newItem);
     saveCollection(name, collection);
 
-    if (name === 'appointments') {
+    const apiEndpoint = name === 'appointments' ? '/api/appointments' : name === 'users' ? '/api/users' : null;
+    if (apiEndpoint) {
       try {
-        await fetch('/api/appointments', {
+        await fetch(apiEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newItem),
         });
       } catch (e) {
-        console.error('Failed to save to appointments.json', e);
+        console.error(`Failed to save to ${name}.json`, e);
       }
     }
     return newItem;
@@ -150,15 +100,16 @@ export const db = {
     collection[index] = { ...collection[index], ...data };
     saveCollection(name, collection);
 
-    if (name === 'appointments') {
+    const apiEndpoint = name === 'appointments' ? `/api/appointments/${id}` : name === 'users' ? `/api/users/${id}` : null;
+    if (apiEndpoint) {
       try {
-        await fetch(`/api/appointments/${id}`, {
+        await fetch(apiEndpoint, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
         });
       } catch (e) {
-        console.error('Failed to update appointments.json', e);
+        console.error(`Failed to update ${name}.json`, e);
       }
     }
     return collection[index];

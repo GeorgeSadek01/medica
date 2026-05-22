@@ -1,18 +1,13 @@
 import { useEffect, useState } from 'react';
 import {
-  Box,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  CircularProgress,
-  Switch,
+  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Chip, CircularProgress, Switch, IconButton, Button, Dialog, DialogTitle, DialogContent,
+  DialogContentText, DialogActions,
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import { useNavigate } from 'react-router-dom';
 import adminService from '../services/admin.service';
 
 interface User {
@@ -25,8 +20,10 @@ interface User {
 }
 
 export default function AdminUsers() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmDialog, setConfirmDialog] = useState<{ type: 'delete' | 'makeAdmin'; user: User } | null>(null);
 
   const loadUsers = async () => {
     try {
@@ -45,6 +42,20 @@ export default function AdminUsers() {
     const newStatus = !(user.is_active ?? true);
     await adminService.toggleUserStatus(user.id, newStatus);
     setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, is_active: newStatus } : u)));
+  };
+
+  const handleDelete = async (user: User) => {
+    await adminService.softDeleteUser(user.id);
+    setUsers((prev) =>
+      prev.map((u) => (u.id === user.id ? { ...u, is_active: false, deleted_at: new Date().toISOString() } : u)),
+    );
+    setConfirmDialog(null);
+  };
+
+  const handleMakeAdmin = async (user: User) => {
+    await adminService.makeAdmin(user.id);
+    setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, role: 'admin' } : u)));
+    setConfirmDialog(null);
   };
 
   if (loading) {
@@ -69,18 +80,23 @@ export default function AdminUsers() {
               <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Role</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                <TableCell colSpan={5} align="center" sx={{ py: 3, color: 'text.secondary' }}>
                   No users found.
                 </TableCell>
               </TableRow>
             ) : (
               users.map((u) => (
-                <TableRow key={u.id} hover>
+                <TableRow
+                  key={u.id}
+                  hover
+                  sx={{ opacity: u.is_active === false ? 0.5 : 1 }}
+                >
                   <TableCell sx={{ fontWeight: 500 }}>
                     {u.first_name} {u.last_name}
                   </TableCell>
@@ -89,15 +105,55 @@ export default function AdminUsers() {
                     <Chip
                       label={u.role}
                       size="small"
-                      color={u.role === 'doctor' ? 'primary' : 'default'}
+                      color={
+                        u.role === 'doctor' ? 'primary' :
+                        u.role === 'admin' ? 'warning' : 'default'
+                      }
                     />
                   </TableCell>
                   <TableCell>
-                    <Switch
-                      checked={u.is_active ?? true}
-                      onChange={() => handleToggle(u)}
-                      color="success"
-                    />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Switch
+                        checked={u.is_active ?? true}
+                        onChange={() => handleToggle(u)}
+                        color="success"
+                      />
+                      <Chip
+                        label={(u.is_active ?? true) ? 'Active' : 'Inactive'}
+                        size="small"
+                        color={(u.is_active ?? true) ? 'success' : 'error'}
+                      />
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <IconButton
+                        size="small"
+                        color="info"
+                        title="View Profile"
+                        onClick={() => navigate(`/admin/users/${u.id}`)}
+                      >
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
+                      {u.role !== 'admin' && (
+                        <IconButton
+                          size="small"
+                          color="warning"
+                          title="Make Admin"
+                          onClick={() => setConfirmDialog({ type: 'makeAdmin', user: u })}
+                        >
+                          <AdminPanelSettingsIcon fontSize="small" />
+                        </IconButton>
+                      )}
+                      <IconButton
+                        size="small"
+                        color="error"
+                        title="Delete User"
+                        onClick={() => setConfirmDialog({ type: 'delete', user: u })}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))
@@ -105,6 +161,33 @@ export default function AdminUsers() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      <Dialog open={!!confirmDialog} onClose={() => setConfirmDialog(null)}>
+        <DialogTitle>
+          {confirmDialog?.type === 'delete' ? 'Confirm Delete' : 'Confirm Make Admin'}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {confirmDialog?.type === 'delete'
+              ? `Are you sure you want to soft-delete "${confirmDialog?.user.first_name} ${confirmDialog?.user.last_name}"? They will be marked as inactive.`
+              : `Make "${confirmDialog?.user.first_name} ${confirmDialog?.user.last_name}" an admin? They will gain full admin access.`}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDialog(null)}>Cancel</Button>
+          <Button
+            variant="contained"
+            color={confirmDialog?.type === 'delete' ? 'error' : 'warning'}
+            onClick={() =>
+              confirmDialog?.type === 'delete'
+                ? handleDelete(confirmDialog.user)
+                : handleMakeAdmin(confirmDialog!.user)
+            }
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
