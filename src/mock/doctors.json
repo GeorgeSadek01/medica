@@ -51,5 +51,114 @@
       { "id": 8, "day": "Sunday", "start_time": "10:00", "end_time": "14:00" },
       { "id": 9, "day": "Tuesday", "start_time": "14:00", "end_time": "17:00" }
     ]
+  },
+  {
+    "id": 5,
+    "first_name": "Mona",
+    "last_name": "Youssef",
+    "specialty": "Ophthalmology",
+    "bio": "Eye surgeon specializing in cataract and refractive surgery.",
+    "contact": "mona.youssef@medica.com",
+    "session_price": 550,
+    "availability": [
+      { "id": 10, "day": "Saturday", "start_time": "09:00", "end_time": "13:00" },
+      { "id": 11, "day": "Monday", "start_time": "15:00", "end_time": "18:00" },
+      { "id": 12, "day": "Thursday", "start_time": "08:00", "end_time": "11:00" }
+    ]
+  },
+  {
+    "id": 6,
+    "first_name": "Karim",
+    "last_name": "Nabil",
+    "specialty": "Orthopedics",
+    "bio": "Orthopedic surgeon specializing in sports injuries and joint replacement.",
+    "contact": "karim.nabil@medica.com",
+    "session_price": 700,
+    "availability": [
+      { "id": 13, "day": "Sunday", "start_time": "08:00", "end_time": "12:00" },
+      { "id": 14, "day": "Tuesday", "start_time": "09:00", "end_time": "12:00" },
+      { "id": 15, "day": "Thursday", "start_time": "14:00", "end_time": "17:00" }
+    ]
+  },
+  {
+    "id": 7,
+    "first_name": "Nadia",
+    "last_name": "Fawzy",
+    "specialty": "Gynecology",
+    "bio": "OB-GYN with over 12 years of experience in women's health.",
+    "contact": "nadia.fawzy@medica.com",
+    "session_price": 450,
+    "availability": [
+      { "id": 16, "day": "Saturday", "start_time": "13:00", "end_time": "17:00" },
+      { "id": 17, "day": "Monday", "start_time": "09:00", "end_time": "12:00" },
+      { "id": 18, "day": "Wednesday", "start_time": "10:00", "end_time": "14:00" }
+    ]
+  },
+  {
+    "id": 8,
+    "first_name": "Hossam",
+    "last_name": "Magdy",
+    "specialty": "Cardiology",
+    "bio": "Interventional cardiologist specializing in angioplasty and heart failure management.",
+    "contact": "hossam.magdy@medica.com",
+    "session_price": 650,
+    "availability": [
+      { "id": 19, "day": "Tuesday", "start_time": "10:00", "end_time": "14:00" },
+      { "id": 20, "day": "Friday", "start_time": "09:00", "end_time": "12:00" }
+    ]
+  },
+  {
+    "id": 9,
+    "first_name": "Dina",
+    "last_name": "Sherif",
+    "specialty": "Dermatology",
+    "bio": "Cosmetic dermatologist offering laser and aesthetic treatments.",
+    "contact": "dina.sherif@medica.com",
+    "session_price": 500,
+    "availability": [
+      { "id": 21, "day": "Sunday", "start_time": "11:00", "end_time": "15:00" },
+      { "id": 22, "day": "Wednesday", "start_time": "09:00", "end_time": "13:00" },
+      { "id": 23, "day": "Thursday", "start_time": "10:00", "end_time": "14:00" }
+    ]
+  },
+  {
+    "id": 10,
+    "first_name": "Tarek",
+    "last_name": "Rashad",
+    "specialty": "Pediatrics",
+    "bio": "Pediatric pulmonologist treating asthma and respiratory conditions in children.",
+    "contact": "tarek.rashad@medica.com",
+    "session_price": 350,
+    "availability": [
+      { "id": 24, "day": "Saturday", "start_time": "08:00", "end_time": "11:00" },
+      { "id": 25, "day": "Tuesday", "start_time": "14:00", "end_time": "17:00" }
+    ]
+  },
+  {
+    "id": 11,
+    "first_name": "Rania",
+    "last_name": "Adel",
+    "specialty": "Neurology",
+    "bio": "Neurologist specializing in stroke rehabilitation and multiple sclerosis.",
+    "contact": "rania.adel@medica.com",
+    "session_price": 600,
+    "availability": [
+      { "id": 26, "day": "Monday", "start_time": "08:00", "end_time": "11:00" },
+      { "id": 27, "day": "Friday", "start_time": "13:00", "end_time": "16:00" }
+    ]
+  },
+  {
+    "id": 12,
+    "first_name": "Yasser",
+    "last_name": "Gamal",
+    "specialty": "Orthopedics",
+    "bio": "Spine surgeon specializing in minimally invasive procedures and scoliosis correction.",
+    "contact": "yasser.gamal@medica.com",
+    "session_price": 800,
+    "availability": [
+      { "id": 28, "day": "Sunday", "start_time": "14:00", "end_time": "17:00" },
+      { "id": 29, "day": "Wednesday", "start_time": "13:00", "end_time": "16:00" },
+      { "id": 30, "day": "Thursday", "start_time": "09:00", "end_time": "12:00" }
+    ]
   }
 ]
