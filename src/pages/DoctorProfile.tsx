@@ -4,9 +4,18 @@ import BookingModal from '../components/BookingModal';
 import { useParams } from 'react-router-dom';
 import doctorService from '../services/doctor.service';
 
+interface Doctor {
+  id: number;
+  first_name: string;
+  last_name: string;
+  specialty: string;
+  bio: string;
+  session_price?: number;
+}
+
 const DoctorProfile: React.FC = () => {
   const { id } = useParams();
-  const [doctor, setDoctor] = useState<any | null>(null);
+  const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [loading, setLoading] = useState(true);
   const [bookingOpen, setBookingOpen] = useState(false);
 

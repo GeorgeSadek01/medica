@@ -70,20 +70,27 @@ export default function DoctorAppointmentsPage() {
       const currentDoc = allDoctors.find((d) => d.contact === user?.email);
 
       if (currentDoc) {
-        setAppointments(allApps.filter((app: any) => Number(app.doctor) === Number(currentDoc.id)));
+        setAppointments(
+          allApps.filter(
+            (app: Appointment) => Number(app.doctor) === Number(currentDoc.id),
+          ) as Appointment[],
+        );
       } else {
-        setAppointments(allApps);
+        setAppointments(allApps as Appointment[]);
       }
-    } catch (e) {
+    } catch {
       setAlert({ type: 'error', text: 'Failed to load appointments.' });
     } finally {
       setLoading(false);
     }
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (user) loadAppointments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>, app: Appointment) => {
     setAnchorEl(event.currentTarget);

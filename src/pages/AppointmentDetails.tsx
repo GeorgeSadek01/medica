@@ -4,9 +4,25 @@ import { useParams, useNavigate } from 'react-router-dom';
 import appointmentService from '../services/appointment.service';
 import doctorService from '../services/doctor.service';
 
+interface AppointmentData {
+  id: number;
+  doctor: number;
+  doctor_name: string;
+  specialty: string;
+  date: string;
+  time: string;
+  status: string;
+}
+
+interface DoctorData {
+  first_name: string;
+  last_name: string;
+  specialty: string;
+}
+
 const AppointmentDetails: React.FC = () => {
   const { id } = useParams();
-  const [appt, setAppt] = useState<any | null>(null);
+  const [appt, setAppt] = useState<AppointmentData | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -15,12 +31,11 @@ const AppointmentDetails: React.FC = () => {
       if (!id) return;
       setLoading(true);
       const a = await appointmentService.getById(Number(id));
-      // if appointment exists but missing doctor info, try to fetch doctor record
       if (a && (!a.doctor_name || !a.specialty)) {
-        const doc = await doctorService.getById(a.doctor);
+        const doc = (await doctorService.getById(a.doctor)) as DoctorData | null;
         if (doc) {
-          a.doctor_name = `${(doc as any).first_name} ${(doc as any).last_name}`;
-          a.specialty = (doc as any).specialty;
+          a.doctor_name = `${doc.first_name} ${doc.last_name}`;
+          a.specialty = doc.specialty;
         }
       }
       setAppt(a);

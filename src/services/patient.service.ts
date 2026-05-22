@@ -1,20 +1,18 @@
 import { db } from '../mock/db';
 
 const patientService = {
-  getProfile: async (_id: number) => {
+  getProfile: async (id: number) => {
     const stored = localStorage.getItem('user');
-    return stored ? JSON.parse(stored) : null;
+    if (stored) return JSON.parse(stored);
+    return db.getById('users', id);
   },
 
   updateProfile: async (id: number, data: Record<string, unknown>) => {
-    const updated = await db.update('users', id, data);
-    if (updated) {
-      const safeUser = { ...updated } as Record<string, unknown>;
-      delete safeUser.password;
-      localStorage.setItem('user', JSON.stringify(safeUser));
-      return safeUser;
-    }
-    return null;
+    localStorage.setItem(
+      'user',
+      JSON.stringify({ ...JSON.parse(localStorage.getItem('user') || '{}'), ...data }),
+    );
+    return db.update('users', id, data);
   },
 };
 

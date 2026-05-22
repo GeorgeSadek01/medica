@@ -58,6 +58,7 @@ export default function DoctorProfilePage() {
     text: string;
   } | null>(null);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const initDoctorProfile = async () => {
       try {
@@ -95,14 +96,13 @@ export default function DoctorProfilePage() {
       }
     };
 
-    if (!authLoading) {
-      if (user) {
-        initDoctorProfile();
-      } else {
-        setLoading(false);
-      }
+    if (!authLoading && user) {
+      initDoctorProfile();
+    } else if (!authLoading && !user) {
+      setLoading(false);
     }
   }, [user, authLoading]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -157,7 +157,7 @@ export default function DoctorProfilePage() {
       } else {
         setAlertMessage({ type: 'success', text: 'Profile changes applied locally!' });
       }
-    } catch (error) {
+    } catch {
       setAlertMessage({ type: 'error', text: 'An error occurred while saving configuration.' });
     } finally {
       setSaving(false);

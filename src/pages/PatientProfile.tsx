@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -16,6 +16,7 @@ import { useAppDispatch } from '../store';
 import { selectUser, updateUser } from '../store/authSlice';
 import { patientProfileSchema } from '../validations';
 import patientService from '../services/patient.service';
+import type { User } from '../store/authSlice';
 
 const PatientProfile: React.FC = () => {
   const user = useSelector(selectUser);
@@ -25,26 +26,15 @@ const PatientProfile: React.FC = () => {
   const [message, setMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [form, setForm] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    avatar: '',
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [form, setForm] = useState(() => ({
+    first_name: user?.first_name ?? '',
+    last_name: user?.last_name ?? '',
+    email: user?.email ?? '',
+    phone: user?.phone ?? '',
+    avatar: user?.avatar ?? '',
+  }));
 
-  useEffect(() => {
-    if (user) {
-      setForm({
-        first_name: user.first_name ?? '',
-        last_name: user.last_name ?? '',
-        email: user.email ?? '',
-        phone: user.phone ?? '',
-        avatar: user.avatar ?? '',
-      });
-    }
-  }, [user]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -71,11 +61,13 @@ const PatientProfile: React.FC = () => {
     setMessage('');
     try {
       await patientProfileSchema.validate(form, { abortEarly: false });
-    } catch (err: any) {
+    } catch (err) {
       const fieldErrors: Record<string, string> = {};
-      err.inner?.forEach((e: any) => {
-        if (e.path) fieldErrors[e.path] = e.message;
-      });
+      if (err && typeof err === 'object' && 'inner' in err) {
+        (err as { inner: { path?: string; message: string }[] }).inner?.forEach((e) => {
+          if (e.path) fieldErrors[e.path] = e.message;
+        });
+      }
       setErrors(fieldErrors);
       return;
     }
@@ -83,7 +75,7 @@ const PatientProfile: React.FC = () => {
     try {
       const updated = await patientService.updateProfile(user.id, form);
       if (updated) {
-        dispatch(updateUser(updated as any));
+        dispatch(updateUser(updated as unknown as Partial<User>));
         setEditing(false);
         setMessage('Profile updated successfully.');
       }

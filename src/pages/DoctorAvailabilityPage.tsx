@@ -61,18 +61,17 @@ export default function DoctorAvailabilityPage() {
     text: string;
   } | null>(null);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const initAvailability = async () => {
       try {
         setLoading(true);
         const allDoctors = await doctorService.getAll().catch(() => []);
-
         const currentDoctor = allDoctors.find(
           (d) =>
             d.contact === user?.email ||
             `${d.first_name} ${d.last_name}` === `${user?.first_name} ${user?.last_name}`,
         );
-
         if (currentDoctor) {
           setDoctorId(currentDoctor.id);
           setSlots(currentDoctor.availability || []);
@@ -84,14 +83,13 @@ export default function DoctorAvailabilityPage() {
       }
     };
 
-    if (!authLoading) {
-      if (user) {
-        initAvailability();
-      } else {
-        setLoading(false);
-      }
+    if (!authLoading && user) {
+      initAvailability();
+    } else if (!authLoading && !user) {
+      setLoading(false);
     }
   }, [user, authLoading]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // add new slot
   const handleAddSlot = async () => {
@@ -112,7 +110,7 @@ export default function DoctorAvailabilityPage() {
       const addedSlot = await doctorService.createAvailability(doctorId, newSlot);
       setSlots((prev) => [...prev, addedSlot as AvailabilitySlot]);
       setAlertMessage({ type: 'success', text: 'New availability window appended!' });
-    } catch (error) {
+    } catch {
       setAlertMessage({ type: 'error', text: 'Failed to synchronize slot.' });
     }
   };
@@ -156,7 +154,7 @@ export default function DoctorAvailabilityPage() {
       await doctorService.deleteAvailability(doctorId, slotToDelete);
       setSlots((prev) => prev.filter((s) => s.id !== slotToDelete));
       setAlertMessage({ type: 'success', text: 'Timeslot discarded successfully.' });
-    } catch (error) {
+    } catch {
       setAlertMessage({ type: 'error', text: 'Failed to clear slot from server.' });
     } finally {
       setIsDeleteOpen(false);

@@ -12,15 +12,13 @@ export default function AdminDashboard() {
   useEffect(() => {
     (async () => {
       try {
-        const [users, appointments, specialties] = await Promise.all([
-          adminService.getAllUsers().catch(() => []),
-          adminService.getAllAppointments().catch(() => []),
-          adminService.getSpecialties().catch(() => []),
-        ]);
+        const usersResult = await adminService.getAllUsers().catch(() => []);
+        const appsResult = await adminService.getAllAppointments().catch(() => []);
+        const specsResult = await adminService.getSpecialties().catch(() => []);
         setStats({
-          users: (users as any[]).length,
-          appointments: (appointments as any[]).length,
-          specialties: (specialties as any[]).length,
+          users: (usersResult as unknown[]).length,
+          appointments: (appsResult as unknown[]).length,
+          specialties: (specsResult as unknown[]).length,
         });
       } finally {
         setLoading(false);

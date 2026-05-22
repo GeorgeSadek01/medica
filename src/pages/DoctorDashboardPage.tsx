@@ -75,9 +75,12 @@ export default function DoctorDashboardPage() {
     }
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (user) fetchDashboardData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const totalBookings = appointments.length;
   const confirmedAppointments = appointments.filter(

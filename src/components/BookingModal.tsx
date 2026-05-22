@@ -19,6 +19,39 @@ import { useSelector } from 'react-redux';
 import { selectUser } from '../store/authSlice';
 import { useNavigate } from 'react-router-dom';
 
+interface Slot {
+  id: string;
+  start_time: string;
+  end_time: string;
+  day: string;
+  originalBlockId: number;
+}
+
+interface DoctorInfo {
+  first_name: string;
+  last_name: string;
+  session_price?: number;
+}
+
+interface AppointmentData {
+  id: number;
+  doctor: number;
+  doctor_name: string;
+  patient: number;
+  patient_name: string;
+  date: string;
+  time: string;
+  time_slot: number | string;
+  status: string;
+}
+
+interface AvailabilityBlock {
+  id: number;
+  day: string;
+  start_time: string;
+  end_time: string;
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -38,14 +71,13 @@ function getWeekdayName(dateStr: string) {
 function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
   const user = useSelector(selectUser);
   const [date, setDate] = useState<string>('');
-  // compute today's date in local timezone as YYYY-MM-DD
-  const _today = new Date();
-  const minDate = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padStart(2, '0')}-${String(
-    _today.getDate(),
+  const today = new Date();
+  const minDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+    today.getDate(),
   ).padStart(2, '0')}`;
-  const [availability, setAvailability] = useState<any[]>([]);
-  const [slotsForDate, setSlotsForDate] = useState<any[]>([]);
-  const [selectedSlot, setSelectedSlot] = useState<any | null>(null);
+  const [availability, setAvailability] = useState<AvailabilityBlock[]>([]);
+  const [slotsForDate, setSlotsForDate] = useState<Slot[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [bookingError, setBookingError] = useState('');
   const [alreadyBooked, setAlreadyBooked] = useState(false);
@@ -57,6 +89,7 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
     })();
   }, [doctorId, open]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!date) {
       setSlotsForDate([]);
@@ -65,10 +98,9 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
       return;
     }
     const weekday = getWeekdayName(date);
-    let rawBlocks = availability.filter((s) => s.day === weekday);
+    const rawBlocks = availability.filter((s) => s.day === weekday);
 
-    // Generate 1-hour slots from availability blocks
-    let generatedSlots: any[] = [];
+    const generatedSlots: Slot[] = [];
     rawBlocks.forEach((block) => {
       const [startH, startM] = (block.start_time || '00:00').split(':').map(Number);
       const [endH, endM] = (block.end_time || '23:59').split(':').map(Number);
@@ -116,40 +148,40 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
       });
     }
     (async () => {
-      // remove slots already booked for this doctor on the selected date
       try {
         const allAppts = await appointmentService.getAll();
-        const taken = new Set<number | string>();
+        const taken = new Set<string>();
         let patientAlreadyBooked = false;
 
-        allAppts.forEach((ap: any) => {
+        (allAppts as unknown as AppointmentData[]).forEach((ap) => {
           if (ap.doctor === doctorId && ap.date === date && ap.status !== 'cancelled') {
             if (ap.time) taken.add(ap.time);
-            if (ap.time_slot !== undefined) taken.add(ap.time_slot);
-            // Block the patient if they already have any active appointment (pending OR confirmed)
+            if (ap.time_slot !== undefined) taken.add(String(ap.time_slot));
             if (ap.patient === user?.id) patientAlreadyBooked = true;
           }
         });
 
-        // Also cross-check the doctor's persisted bookedSlots map (set after payment)
         const doc = await doctorService.getById(doctorId);
-        const bookedSlots: Record<string, string[]> = (doc as any)?.bookedSlots ?? {};
+        const bookedSlots: Record<string, string[]> =
+          ((doc as unknown as Record<string, unknown>)?.bookedSlots as Record<string, string[]>) ??
+          {};
         const paidTimes: string[] = bookedSlots[date] ?? [];
         paidTimes.forEach((t) => taken.add(t));
 
         setAlreadyBooked(patientAlreadyBooked);
         const availableSlots = slots.filter((s) => !taken.has(s.id) && !taken.has(s.start_time));
         setSlotsForDate(availableSlots);
-      } catch (err) {
+      } catch {
         setSlotsForDate(slots);
       }
     })();
     setSelectedSlot(null);
-  }, [date, availability]);
+  }, [date, availability, doctorId, user?.id]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const navigate = useNavigate();
 
-  const [doctorInfo, setDoctorInfo] = useState<any | null>(null);
+  const [doctorInfo, setDoctorInfo] = useState<DoctorInfo | null>(null);
   useEffect(() => {
     (async () => {
       const doc = await doctorService.getById(doctorId);
@@ -170,14 +202,15 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
         time: selectedSlot.start_time,
         patient: user?.id,
         patient_name: user ? `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() : '',
-      } as any);
+      });
       onClose();
-      onBooked && onBooked();
+      onBooked?.();
       navigate(`/payment/${newAppointment.id}`);
-    } catch (err: any) {
-      // Service throws if patient already has an appointment on this day
+    } catch (err: unknown) {
       setConfirmOpen(true);
-      setBookingError(err?.message ?? 'Failed to book appointment. Please try again.');
+      setBookingError(
+        err instanceof Error ? err.message : 'Failed to book appointment. Please try again.',
+      );
     }
   };
 
@@ -243,7 +276,7 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
                   setDate(minDate);
                 }
               }}
-              {...({ InputLabelProps: { shrink: true } } as any)}
+              slotProps={{ inputLabel: { shrink: true } }}
               inputProps={{ min: minDate }}
             />
           </Box>

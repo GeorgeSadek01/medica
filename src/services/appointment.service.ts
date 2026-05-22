@@ -35,6 +35,15 @@ interface AvailabilityBlock {
   end_time: string;
 }
 
+interface DoctorRecord {
+  id: number;
+  first_name: string;
+  last_name: string;
+  specialty: string;
+  availability: AvailabilityBlock[];
+  bookedSlots: Record<string, string[]>;
+}
+
 function getWeekdayFromDate(dateStr: string): string {
   const parts = dateStr.split('-');
   if (parts.length !== 3) return '';
@@ -168,9 +177,9 @@ const appointmentService = {
       }
     }
 
-    const doc = await db.getById('doctors', data.doctor);
-    const doctor_name = doc ? `${(doc as any).first_name} ${(doc as any).last_name}` : '';
-    const specialty = doc ? (doc as any).specialty : '';
+    const doc = (await db.getById('doctors', data.doctor)) as unknown as DoctorRecord | null;
+    const doctor_name = doc ? `${doc.first_name} ${doc.last_name}` : '';
+    const specialty = doc ? doc.specialty : '';
 
     return db.create<Appointment>('appointments', {
       doctor: data.doctor,
@@ -192,29 +201,25 @@ const appointmentService = {
     const appt = await db.getById<Appointment>('appointments', id);
     const updated = await db.update<Appointment>('appointments', id, { status: 'cancelled' });
 
-    // If this was a confirmed/paid appointment, restore the doctor's availability
-    if (appt && (appt as any).paid && (appt as any).doctor && (appt as any).time) {
-      const doctor = await db.getById('doctors', (appt as any).doctor);
+    if (appt?.paid && appt.doctor && appt.time) {
+      const doctor = (await db.getById('doctors', appt.doctor)) as unknown as DoctorRecord | null;
       if (doctor) {
-        const weekday = getWeekdayFromDate((appt as any).date);
-        const availability: AvailabilityBlock[] = (doctor as any).availability ?? [];
+        const weekday = getWeekdayFromDate(appt.date);
+        const availability: AvailabilityBlock[] = doctor.availability ?? [];
         const updatedAvailability = restoreAvailabilityForCancellation(
           availability,
           weekday,
-          (appt as any).time,
+          appt.time,
         );
 
-        // Clean up bookedSlots
-        const bookedSlots: Record<string, string[]> = (doctor as any).bookedSlots ?? {};
-        const dateKey = (appt as any).date;
+        const bookedSlots: Record<string, string[]> = doctor.bookedSlots ?? {};
+        const dateKey = appt.date;
         if (bookedSlots[dateKey]) {
-          bookedSlots[dateKey] = bookedSlots[dateKey].filter(
-            (t: string) => t !== (appt as any).time,
-          );
+          bookedSlots[dateKey] = bookedSlots[dateKey].filter((t: string) => t !== appt.time);
           if (bookedSlots[dateKey].length === 0) delete bookedSlots[dateKey];
         }
 
-        await db.update('doctors', (appt as any).doctor, {
+        await db.update('doctors', appt.doctor, {
           availability: updatedAvailability,
           bookedSlots,
         });
@@ -231,16 +236,16 @@ const appointmentService = {
     });
 
     if (updated) {
-      const appt = updated as any;
-      const doctor = await db.getById('doctors', appt.doctor);
+      const appt = updated;
+      const doctor = (await db.getById('doctors', appt.doctor)) as unknown as DoctorRecord | null;
       if (doctor && appt.time) {
         const weekday = getWeekdayFromDate(appt.date);
 
-        const availability: AvailabilityBlock[] = (doctor as any).availability ?? [];
+        const availability: AvailabilityBlock[] = doctor.availability ?? [];
         const updatedAvailability = updateAvailabilityForBooking(availability, weekday, appt.time);
 
-        const bookedSlots: Record<string, string[]> = (doctor as any).bookedSlots ?? {};
-        const dateKey = appt.date as string;
+        const bookedSlots: Record<string, string[]> = doctor.bookedSlots ?? {};
+        const dateKey = appt.date;
         const existing: string[] = bookedSlots[dateKey] ?? [];
         if (!existing.includes(appt.time)) {
           bookedSlots[dateKey] = [...existing, appt.time];
@@ -260,27 +265,25 @@ const appointmentService = {
       doctor_notes: notes ?? '',
     });
 
-    if (appt && (appt as any).paid && (appt as any).doctor && (appt as any).time) {
-      const doctor = await db.getById('doctors', (appt as any).doctor);
+    if (appt?.paid && appt.doctor && appt.time) {
+      const doctor = (await db.getById('doctors', appt.doctor)) as unknown as DoctorRecord | null;
       if (doctor) {
-        const weekday = getWeekdayFromDate((appt as any).date);
-        const availability: AvailabilityBlock[] = (doctor as any).availability ?? [];
+        const weekday = getWeekdayFromDate(appt.date);
+        const availability: AvailabilityBlock[] = doctor.availability ?? [];
         const updatedAvailability = restoreAvailabilityForCancellation(
           availability,
           weekday,
-          (appt as any).time,
+          appt.time,
         );
 
-        const bookedSlots: Record<string, string[]> = (doctor as any).bookedSlots ?? {};
-        const dateKey = (appt as any).date;
+        const bookedSlots: Record<string, string[]> = doctor.bookedSlots ?? {};
+        const dateKey = appt.date;
         if (bookedSlots[dateKey]) {
-          bookedSlots[dateKey] = bookedSlots[dateKey].filter(
-            (t: string) => t !== (appt as any).time,
-          );
+          bookedSlots[dateKey] = bookedSlots[dateKey].filter((t: string) => t !== appt.time);
           if (bookedSlots[dateKey].length === 0) delete bookedSlots[dateKey];
         }
 
-        await db.update('doctors', (appt as any).doctor, {
+        await db.update('doctors', appt.doctor, {
           availability: updatedAvailability,
           bookedSlots,
         });

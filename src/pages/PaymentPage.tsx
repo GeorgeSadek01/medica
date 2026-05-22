@@ -19,11 +19,26 @@ import PersonIcon from '@mui/icons-material/Person';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import LockIcon from '@mui/icons-material/Lock';
 
+interface AppointmentData {
+  id: number;
+  doctor: number;
+  doctor_name: string;
+  date: string;
+  time: string;
+  status: string;
+}
+
+interface DoctorData {
+  first_name: string;
+  last_name: string;
+  session_price?: number;
+}
+
 const PaymentPage: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [appointment, setAppointment] = useState<any | null>(null);
-  const [doctorInfo, setDoctorInfo] = useState<any | null>(null);
+  const [appointment, setAppointment] = useState<AppointmentData | null>(null);
+  const [doctorInfo, setDoctorInfo] = useState<DoctorData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [cardName, setCardName] = useState('');
