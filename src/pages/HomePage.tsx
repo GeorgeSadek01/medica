@@ -2,20 +2,27 @@ import { useEffect, useState } from 'react';
 import { Box, Typography, TextField, Button, MenuItem, Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import doctorService from '../services/doctor.service';
+import { useAppSelector } from '../store';
+import { selectAuth } from '../store/authSlice';
 
 function HomePage() {
   const navigate = useNavigate();
+  const { user } = useAppSelector(selectAuth);
   const [name, setName] = useState('');
   const [specialty, setSpecialty] = useState('');
   const [specialties, setSpecialties] = useState<string[]>([]);
 
   useEffect(() => {
+    if (user?.role === 'doctor') {
+      navigate('/doctor/dashboard', { replace: true });
+      return;
+    }
     (async () => {
       const doctors = await doctorService.getAll();
       const uniq = Array.from(new Set(doctors.map((d) => d.specialty))).sort();
       setSpecialties(uniq);
     })();
-  }, []);
+  }, [user, navigate]);
 
   const handleSearch = () => {
     const params = new URLSearchParams();
