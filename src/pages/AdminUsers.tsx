@@ -1,14 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Chip, CircularProgress, Switch, IconButton, Button, Dialog, DialogTitle, DialogContent,
-  DialogContentText, DialogActions,
+  DialogContentText, DialogActions, Pagination,
 } from '@mui/material';
+import VerifiedIcon from '@mui/icons-material/Verified';
+import GppMaybeIcon from '@mui/icons-material/GppMaybe';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useNavigate } from 'react-router-dom';
 import adminService from '../services/admin.service';
+import SearchBar from '../components/shared/SearchBar';
 
 interface User {
   id: number;
@@ -17,12 +20,17 @@ interface User {
   last_name: string;
   role: string;
   is_active?: boolean;
+  verified?: boolean;
 }
+
+const ITEMS_PER_PAGE = 8;
 
 export default function AdminUsers() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [confirmDialog, setConfirmDialog] = useState<{ type: 'delete' | 'makeAdmin'; user: User } | null>(null);
 
   const loadUsers = async () => {
@@ -38,10 +46,33 @@ export default function AdminUsers() {
     loadUsers();
   }, []);
 
+  const filtered = useMemo(() => {
+    if (!search) return users;
+    const q = search.toLowerCase();
+    return users.filter(
+      (u) =>
+        `${u.first_name} ${u.last_name}`.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q),
+    );
+  }, [users, search]);
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const displayed = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
   const handleToggle = async (user: User) => {
     const newStatus = !(user.is_active ?? true);
     await adminService.toggleUserStatus(user.id, newStatus);
     setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, is_active: newStatus } : u)));
+  };
+
+  const handleVerifyToggle = async (user: User) => {
+    const newVerified = !(user.verified ?? false);
+    await adminService.verifyDoctor(user.id, newVerified);
+    setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, verified: newVerified } : u)));
   };
 
   const handleDelete = async (user: User) => {
@@ -58,6 +89,8 @@ export default function AdminUsers() {
     setConfirmDialog(null);
   };
 
+  const unverifiedCount = users.filter((u) => u.role === 'doctor' && !u.verified).length;
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
@@ -68,9 +101,27 @@ export default function AdminUsers() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 3, color: 'primary.main' }}>
-        Users Management
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+          Users Management
+        </Typography>
+        {unverifiedCount > 0 && (
+          <Chip
+            icon={<GppMaybeIcon />}
+            label={`${unverifiedCount} doctor${unverifiedCount > 1 ? 's' : ''} pending verification`}
+            color="warning"
+            variant="outlined"
+            size="small"
+          />
+        )}
+      </Box>
+
+      <Box sx={{ mb: 3, maxWidth: 400 }}>
+        <SearchBar
+          placeholder="Search by name or email..."
+          onSearch={setSearch}
+        />
+      </Box>
 
       <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
         <Table>
@@ -80,18 +131,19 @@ export default function AdminUsers() {
               <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Role</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Verified</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {users.length === 0 ? (
+            {displayed.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 3, color: 'text.secondary' }}>
                   No users found.
                 </TableCell>
               </TableRow>
             ) : (
-              users.map((u) => (
+              displayed.map((u) => (
                 <TableRow
                   key={u.id}
                   hover
@@ -117,6 +169,7 @@ export default function AdminUsers() {
                         checked={u.is_active ?? true}
                         onChange={() => handleToggle(u)}
                         color="success"
+                        size="small"
                       />
                       <Chip
                         label={(u.is_active ?? true) ? 'Active' : 'Inactive'}
@@ -124,6 +177,29 @@ export default function AdminUsers() {
                         color={(u.is_active ?? true) ? 'success' : 'error'}
                       />
                     </Box>
+                  </TableCell>
+                  <TableCell>
+                    {u.role === 'doctor' ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Switch
+                          checked={u.verified ?? false}
+                          onChange={() => handleVerifyToggle(u)}
+                          color="primary"
+                          size="small"
+                        />
+                        <Chip
+                          icon={u.verified ? <VerifiedIcon /> : <GppMaybeIcon />}
+                          label={u.verified ? 'Verified' : 'Pending'}
+                          size="small"
+                          color={u.verified ? 'success' : 'warning'}
+                          variant={u.verified ? 'filled' : 'outlined'}
+                        />
+                      </Box>
+                    ) : (
+                      <Typography variant="body2" color="text.disabled">
+                        —
+                      </Typography>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 0.5 }}>
@@ -161,6 +237,21 @@ export default function AdminUsers() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {totalPages > 1 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, p) => setPage(p)}
+            color="primary"
+          />
+        </Box>
+      )}
+
+      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block', textAlign: 'center' }}>
+        Showing {displayed.length} of {filtered.length} user{filtered.length !== 1 ? 's' : ''}
+      </Typography>
 
       <Dialog open={!!confirmDialog} onClose={() => setConfirmDialog(null)}>
         <DialogTitle>

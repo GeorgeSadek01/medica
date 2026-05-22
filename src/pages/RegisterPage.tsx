@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -20,6 +20,7 @@ import { ValidationError } from 'yup';
 import { registerSchema } from '../validations';
 import { useAppDispatch, useAppSelector } from '../store';
 import { registerUser, clearError, selectAuth } from '../store/authSlice';
+import { db } from '../mock/db';
 import type { RegisterFormData } from '../validations';
 
 function RegisterPage() {
@@ -34,11 +35,20 @@ function RegisterPage() {
     password: '',
     confirm_password: '',
     role: 'patient',
+    specialty: '',
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [specialties, setSpecialties] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof RegisterFormData, string>>>(
     {},
   );
+
+  useEffect(() => {
+    (async () => {
+      const items = await db.getAll<{ id: number; name: string }>('specialties');
+      setSpecialties(items.map((s) => s.name).sort());
+    })();
+  }, []);
 
   const validateField = (name: keyof RegisterFormData, value: string) => {
     try {
@@ -62,7 +72,7 @@ function RegisterPage() {
     };
 
   const handleBlur = (field: keyof RegisterFormData) => () => {
-    validateField(field, form[field]);
+    validateField(field, form[field] ?? '');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -151,6 +161,28 @@ function RegisterPage() {
         </Select>
         {fieldErrors.role && <FormHelperText>{fieldErrors.role}</FormHelperText>}
       </FormControl>
+
+      {form.role === 'doctor' && (
+        <FormControl fullWidth margin="normal" error={!!fieldErrors.specialty}>
+          <InputLabel id="specialty-label">Specialty</InputLabel>
+          <Select
+            labelId="specialty-label"
+            value={form.specialty ?? ''}
+            label="Specialty"
+            onChange={(e) => {
+              setForm((prev) => ({ ...prev, specialty: e.target.value }));
+            }}
+            onBlur={handleBlur('specialty')}
+          >
+            {specialties.map((s) => (
+              <MenuItem key={s} value={s}>
+                {s}
+              </MenuItem>
+            ))}
+          </Select>
+          {fieldErrors.specialty && <FormHelperText>{fieldErrors.specialty}</FormHelperText>}
+        </FormControl>
+      )}
 
       <TextField
         fullWidth

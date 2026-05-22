@@ -62,6 +62,21 @@ const adminService = {
     const all = await db.getAll('users');
     return all.filter((u: any) => u.role === 'patient' && u.is_active !== false);
   },
+
+  verifyDoctor: async (id: number, verified: boolean) => {
+    await db.update('users', id, { verified });
+    return { id, verified };
+  },
+
+  getUnverifiedDoctors: async () => {
+    const all = await db.getAll('users');
+    return all.filter((u: any) => u.role === 'doctor' && u.verified !== true);
+  },
+
+  getUnverifiedDoctorsCount: async () => {
+    const all = await db.getAll('users');
+    return all.filter((u: any) => u.role === 'doctor' && u.verified !== true).length;
+  },
 };
 
 export default adminService;

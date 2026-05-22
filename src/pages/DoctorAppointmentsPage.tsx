@@ -28,6 +28,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import DescriptionIcon from '@mui/icons-material/Description';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import GppMaybeIcon from '@mui/icons-material/GppMaybe';
 
 import appointmentService from '../services/appointment.service';
 import doctorService from '../services/doctor.service';
@@ -165,7 +166,17 @@ export default function DoctorAppointmentsPage() {
         </Alert>
       )}
 
-      {loading ? (
+      {user && user.role === 'doctor' && !user.verified ? (
+        <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 4, maxWidth: 480, mx: 'auto', mt: 4 }}>
+          <GppMaybeIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
+          <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
+            Account Pending Verification
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Your account is awaiting admin approval. You cannot manage appointments until verified.
+          </Typography>
+        </Paper>
+      ) : loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
           <CircularProgress />
         </Box>

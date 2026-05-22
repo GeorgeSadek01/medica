@@ -8,7 +8,8 @@
     "role": "doctor",
     "phone": "",
     "avatar": "",
-    "is_active": true
+    "is_active": true,
+    "verified": true
   },
   {
     "id": 2,
@@ -18,7 +19,8 @@
     "last_name": "Mohamed",
     "role": "doctor",
     "phone": "",
-    "avatar": ""
+    "avatar": "",
+    "verified": true
   },
   {
     "id": 3,
@@ -28,7 +30,8 @@
     "last_name": "Ali",
     "role": "doctor",
     "phone": "",
-    "avatar": ""
+    "avatar": "",
+    "verified": true
   },
   {
     "id": 4,
@@ -38,10 +41,99 @@
     "last_name": "Ibrahim",
     "role": "doctor",
     "phone": "",
-    "avatar": ""
+    "avatar": "",
+    "verified": true
   },
   {
     "id": 5,
+    "email": "mona.youssef@medica.com",
+    "password": "password123",
+    "first_name": "Mona",
+    "last_name": "Youssef",
+    "role": "doctor",
+    "phone": "",
+    "avatar": "",
+    "verified": true
+  },
+  {
+    "id": 6,
+    "email": "karim.nabil@medica.com",
+    "password": "password123",
+    "first_name": "Karim",
+    "last_name": "Nabil",
+    "role": "doctor",
+    "phone": "",
+    "avatar": "",
+    "verified": true
+  },
+  {
+    "id": 7,
+    "email": "nadia.fawzy@medica.com",
+    "password": "password123",
+    "first_name": "Nadia",
+    "last_name": "Fawzy",
+    "role": "doctor",
+    "phone": "",
+    "avatar": "",
+    "verified": true
+  },
+  {
+    "id": 8,
+    "email": "hossam.magdy@medica.com",
+    "password": "password123",
+    "first_name": "Hossam",
+    "last_name": "Magdy",
+    "role": "doctor",
+    "phone": "",
+    "avatar": "",
+    "verified": true
+  },
+  {
+    "id": 9,
+    "email": "dina.sherif@medica.com",
+    "password": "password123",
+    "first_name": "Dina",
+    "last_name": "Sherif",
+    "role": "doctor",
+    "phone": "",
+    "avatar": "",
+    "verified": true
+  },
+  {
+    "id": 10,
+    "email": "tarek.rashad@medica.com",
+    "password": "password123",
+    "first_name": "Tarek",
+    "last_name": "Rashad",
+    "role": "doctor",
+    "phone": "",
+    "avatar": "",
+    "verified": true
+  },
+  {
+    "id": 11,
+    "email": "rania.adel@medica.com",
+    "password": "password123",
+    "first_name": "Rania",
+    "last_name": "Adel",
+    "role": "doctor",
+    "phone": "",
+    "avatar": "",
+    "verified": true
+  },
+  {
+    "id": 12,
+    "email": "yasser.gamal@medica.com",
+    "password": "password123",
+    "first_name": "Yasser",
+    "last_name": "Gamal",
+    "role": "doctor",
+    "phone": "",
+    "avatar": "",
+    "verified": true
+  },
+  {
+    "id": 13,
     "email": "patient@medica.com",
     "password": "password123",
     "first_name": "Default",
@@ -51,7 +143,37 @@
     "avatar": ""
   },
   {
-    "id": 6,
+    "id": 14,
+    "email": "youssef.tarek@medica.com",
+    "password": "password123",
+    "first_name": "Youssef",
+    "last_name": "Tarek",
+    "role": "patient",
+    "phone": "",
+    "avatar": ""
+  },
+  {
+    "id": 15,
+    "email": "nour.khaled@medica.com",
+    "password": "password123",
+    "first_name": "Nour",
+    "last_name": "Khaled",
+    "role": "patient",
+    "phone": "",
+    "avatar": ""
+  },
+  {
+    "id": 16,
+    "email": "mariam.samir@medica.com",
+    "password": "password123",
+    "first_name": "Mariam",
+    "last_name": "Samir",
+    "role": "patient",
+    "phone": "",
+    "avatar": ""
+  },
+  {
+    "id": 17,
     "email": "admin@medica.com",
     "password": "password123",
     "first_name": "Admin",
@@ -60,11 +182,12 @@
     "phone": ""
   },
   {
+    "id": 18,
     "email": "omar@gmail.com",
     "password": "Ppassword123",
     "first_name": "omar",
     "last_name": "abdelsatar",
     "role": "admin",
-    "id": 9
+    "phone": ""
   }
 ]

@@ -27,6 +27,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import GppMaybeIcon from '@mui/icons-material/GppMaybe';
 
 import doctorService from '../services/doctor.service';
 import { useAppSelector } from '../store';
@@ -168,6 +169,22 @@ export default function DoctorAvailabilityPage() {
         sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}
       >
         <CircularProgress size={45} />
+      </Box>
+    );
+  }
+
+  if (user && user.role === 'doctor' && !user.verified) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 4, maxWidth: 480 }}>
+          <GppMaybeIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
+          <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
+            Account Pending Verification
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Your account is awaiting admin approval. You cannot manage availability until verified.
+          </Typography>
+        </Paper>
       </Box>
     );
   }

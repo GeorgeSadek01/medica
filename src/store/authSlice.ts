@@ -10,6 +10,7 @@ export interface User {
   role: 'patient' | 'doctor' | 'admin';
   phone?: string;
   avatar?: string;
+  verified?: boolean;
 }
 
 interface AuthState {
@@ -47,6 +48,7 @@ export const registerUser = createAsyncThunk(
       first_name: string;
       last_name: string;
       role: 'patient' | 'doctor' | 'admin';
+      specialty?: string;
     },
     { rejectWithValue },
   ) => {

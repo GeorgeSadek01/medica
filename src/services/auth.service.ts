@@ -22,6 +22,7 @@ interface RegisterData {
   first_name: string;
   last_name: string;
   role: 'patient' | 'doctor';
+  specialty?: string;
 }
 
 function omitPassword(user: User): Omit<User, 'password'> {
@@ -33,6 +34,7 @@ function omitPassword(user: User): Omit<User, 'password'> {
     role: user.role,
     phone: user.phone,
     avatar: user.avatar,
+    verified: user.verified,
   };
 }
 
@@ -70,13 +72,14 @@ const authService = {
       first_name: rest.first_name,
       last_name: rest.last_name,
       role: rest.role,
+      verified: rest.role === 'doctor' ? false : undefined,
     });
 
     if (rest.role === 'doctor') {
       await db.create('doctors', {
         first_name: rest.first_name,
         last_name: rest.last_name,
-        specialty: 'General Medicine',
+        specialty: rest.specialty || 'General Medicine',
         bio: '',
         contact: rest.email,
         availability: [],

@@ -30,6 +30,12 @@ export const registerSchema = Yup.object({
     .required('Please confirm your password'),
 
   role: Yup.string().oneOf(['patient', 'doctor'], 'Invalid role').required('Role is required'),
+
+  specialty: Yup.string().when('role', {
+    is: 'doctor',
+    then: (schema) => schema.required('Please select your specialty'),
+    otherwise: (schema) => schema.notRequired(),
+  }),
 });
 
 export type LoginFormData = Yup.InferType<typeof loginSchema>;

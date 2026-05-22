@@ -14,6 +14,7 @@ import {
   TableHead,
   TableRow,
   Chip,
+  Button,
 } from '@mui/material';
 
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -21,6 +22,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import DescriptionIcon from '@mui/icons-material/Description';
+import GppMaybeIcon from '@mui/icons-material/GppMaybe';
 
 import appointmentService from '../services/appointment.service';
 import doctorService from '../services/doctor.service';
@@ -112,6 +114,26 @@ export default function DoctorDashboardPage() {
         sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}
       >
         <CircularProgress size={45} />
+      </Box>
+    );
+  }
+
+  if (user && user.role === 'doctor' && !user.verified) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 4, maxWidth: 480 }}>
+          <GppMaybeIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
+          <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
+            Account Pending Verification
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+            Your doctor account is awaiting approval from an administrator.
+            You will not be able to manage appointments or access patient data until your account is verified.
+          </Typography>
+          <Typography variant="body2" color="text.disabled">
+            Please check back later or contact support.
+          </Typography>
+        </Paper>
       </Box>
     );
   }

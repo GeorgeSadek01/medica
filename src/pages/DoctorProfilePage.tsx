@@ -13,6 +13,7 @@ import {
 
 import PhoneIcon from '@mui/icons-material/Phone';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import GppMaybeIcon from '@mui/icons-material/GppMaybe';
 
 import doctorService from '../services/doctor.service';
 import adminService from '../services/admin.service';
@@ -178,6 +179,22 @@ export default function DoctorProfilePage() {
         sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}
       >
         <CircularProgress size={45} />
+      </Box>
+    );
+  }
+
+  if (user && user.role === 'doctor' && !user.verified) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 4, maxWidth: 480 }}>
+          <GppMaybeIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
+          <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
+            Account Pending Verification
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Your account is awaiting admin approval. Profile editing is unavailable until you are verified.
+          </Typography>
+        </Paper>
       </Box>
     );
   }

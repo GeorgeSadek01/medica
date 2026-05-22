@@ -33,7 +33,7 @@ function GuestLayout({ children }: { children?: ReactNode }) {
           </Box>
         </Toolbar>
       </AppBar>
-      <Container component="main" sx={{ flexGrow: 1, py: 3 }}>
+      <Container component="main" maxWidth={false} disableGutters sx={{ flexGrow: 1, py: 3 }}>
         {children}
       </Container>
     </Box>

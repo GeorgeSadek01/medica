@@ -26,17 +26,30 @@ function nextId<T extends Storable>(collection: T[]): number {
 }
 
 function seed(): void {
+  const currentAppointments = getCollection('appointments');
+  const apptJson = JSON.stringify(seedAppointments);
+  if (currentAppointments.length !== seedAppointments.length || JSON.stringify(currentAppointments) !== apptJson) {
+    localStorage.setItem(`${DB_PREFIX}appointments`, apptJson);
+  }
+
   if (localStorage.getItem(SEED_KEY)) {
     const currentDoctors = getCollection('doctors');
     if (currentDoctors.length > 0 && !('session_price' in currentDoctors[0])) {
       localStorage.setItem(`${DB_PREFIX}doctors`, JSON.stringify(seedDoctors));
+      return;
     }
-    if (currentDoctors.length !== seedDoctors.length) {
-      localStorage.setItem(`${DB_PREFIX}doctors`, JSON.stringify(seedDoctors));
-      const specialties = [...new Set(seedDoctors.map((d) => d.specialty))].map((name, i) => ({
-        id: i + 1,
-        name,
-      }));
+    // Only ADD new seed doctors that don't exist yet, never delete existing ones
+    const existingIds = new Set(currentDoctors.map((d) => d.id));
+    const newDoctors = seedDoctors.filter((d) => !existingIds.has(d.id));
+    if (newDoctors.length > 0) {
+      const merged = [...currentDoctors, ...newDoctors];
+      localStorage.setItem(`${DB_PREFIX}doctors`, JSON.stringify(merged));
+      const specialties = [...new Set(merged.map((d) => (d as unknown as { specialty: string }).specialty))].map(
+        (name, i) => ({
+          id: i + 1,
+          name,
+        }),
+      );
       localStorage.setItem(`${DB_PREFIX}specialties`, JSON.stringify(specialties));
     }
     return;
