@@ -32,7 +32,7 @@ const EmptyState = ({
       <Typography variant="h6" color="text.secondary">
         {title}
       </Typography>
-<Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center' }}>
+      <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center' }}>
         {message}
       </Typography>
       {actionLabel && onAction && (

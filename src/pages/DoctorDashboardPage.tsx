@@ -52,14 +52,18 @@ export default function DoctorDashboardPage() {
       setLoading(true);
       const allAppointments = await appointmentService.getAll().catch(() => []);
       const allDoctors = await doctorService.getAll().catch(() => []);
-      
+
       const currentDoctor = allDoctors.find(
-        (d) => d.contact === user?.email || `${d.first_name} ${d.last_name}` === `${user?.first_name} ${user?.last_name}`
+        (d) =>
+          d.contact === user?.email ||
+          `${d.first_name} ${d.last_name}` === `${user?.first_name} ${user?.last_name}`,
       );
 
       if (currentDoctor) {
         setDoctorName(`Dr. ${currentDoctor.first_name} ${currentDoctor.last_name}`);
-        const doctorAppointments = allAppointments.filter((app) => Number(app.doctor) === Number(currentDoctor.id));
+        const doctorAppointments = allAppointments.filter(
+          (app) => Number(app.doctor) === Number(currentDoctor.id),
+        );
         setAppointments(doctorAppointments);
       } else {
         setAppointments(allAppointments);
@@ -76,25 +80,34 @@ export default function DoctorDashboardPage() {
   }, [user]);
 
   const totalBookings = appointments.length;
-  const confirmedAppointments = appointments.filter((a) => a.status === 'confirmed' || a.status === 'completed');
+  const confirmedAppointments = appointments.filter(
+    (a) => a.status === 'confirmed' || a.status === 'completed',
+  );
   const cancelledAppointments = appointments.filter((a) => a.status === 'cancelled');
 
   const confirmedCount = confirmedAppointments.length;
   const cancelledCount = cancelledAppointments.length;
 
   const getStatusChip = (status: string) => {
-    const configs: Record<string, { label: string; color: 'success' | 'error' | 'info' | 'default' }> = {
+    const configs: Record<
+      string,
+      { label: string; color: 'success' | 'error' | 'info' | 'default' }
+    > = {
       confirmed: { label: 'Confirmed', color: 'success' },
       cancelled: { label: 'Cancelled', color: 'error' },
       completed: { label: 'Completed', color: 'info' },
     };
     const config = configs[status] || { label: status, color: 'default' };
-    return <Chip label={config.label} color={config.color} size="small" sx={{ fontWeight: 'bold' }} />;
+    return (
+      <Chip label={config.label} color={config.color} size="small" sx={{ fontWeight: 'bold' }} />
+    );
   };
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+      <Box
+        sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}
+      >
         <CircularProgress size={45} />
       </Box>
     );
@@ -103,7 +116,16 @@ export default function DoctorDashboardPage() {
   return (
     <Box sx={{ flexGrow: 1, p: 2 }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 'bold',
+            color: 'primary.main',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+          }}
+        >
           <LocalHospitalIcon fontSize="large" /> {doctorName} Dashboard
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -114,9 +136,20 @@ export default function DoctorDashboardPage() {
       <Grid container spacing={3} sx={{ mb: 5 }}>
         <Grid item xs={12} sm={4}>
           <Card elevation={2} sx={{ borderLeft: '6px solid #1976d2', borderRadius: 4 }}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2.5 }}>
+            <CardContent
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                py: 2.5,
+              }}
+            >
               <Box>
-                <Typography color="text.secondary" variant="subtitle2" sx={{ fontWeight: 700, textTransform: 'uppercase' }}>
+                <Typography
+                  color="text.secondary"
+                  variant="subtitle2"
+                  sx={{ fontWeight: 700, textTransform: 'uppercase' }}
+                >
                   Total Bookings
                 </Typography>
                 <Typography variant="h3" sx={{ fontWeight: 'bold', mt: 0.5, color: '#1976d2' }}>
@@ -130,9 +163,20 @@ export default function DoctorDashboardPage() {
 
         <Grid item xs={12} sm={4}>
           <Card elevation={2} sx={{ borderLeft: '6px solid #2e7d32', borderRadius: 4 }}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2.5 }}>
+            <CardContent
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                py: 2.5,
+              }}
+            >
               <Box>
-                <Typography color="text.secondary" variant="subtitle2" sx={{ fontWeight: 700, textTransform: 'uppercase' }}>
+                <Typography
+                  color="text.secondary"
+                  variant="subtitle2"
+                  sx={{ fontWeight: 700, textTransform: 'uppercase' }}
+                >
                   Confirmed Slots
                 </Typography>
                 <Typography variant="h3" sx={{ fontWeight: 'bold', mt: 0.5, color: '#2e7d32' }}>
@@ -146,9 +190,20 @@ export default function DoctorDashboardPage() {
 
         <Grid item xs={12} sm={4}>
           <Card elevation={2} sx={{ borderLeft: '6px solid #d32f2f', borderRadius: 4 }}>
-            <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2.5 }}>
+            <CardContent
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                py: 2.5,
+              }}
+            >
               <Box>
-                <Typography color="text.secondary" variant="subtitle2" sx={{ fontWeight: 700, textTransform: 'uppercase' }}>
+                <Typography
+                  color="text.secondary"
+                  variant="subtitle2"
+                  sx={{ fontWeight: 700, textTransform: 'uppercase' }}
+                >
                   Cancelled Slots
                 </Typography>
                 <Typography variant="h3" sx={{ fontWeight: 'bold', mt: 0.5, color: '#d32f2f' }}>
@@ -162,14 +217,17 @@ export default function DoctorDashboardPage() {
       </Grid>
 
       <Grid container spacing={4}>
-        
         <Grid item xs={12}>
           <Paper elevation={2} sx={{ p: 3, borderRadius: 4 }}>
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: 'primary.main' }}>
               Active & Confirmed Schedule
             </Typography>
             {confirmedAppointments.length === 0 ? (
-              <Typography variant="body2" color="text.secondary" sx={{ py: 2, fontStyle: 'italic' }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ py: 2, fontStyle: 'italic' }}
+              >
                 No active or confirmed appointments found for your profile.
               </Typography>
             ) : (
@@ -187,10 +245,19 @@ export default function DoctorDashboardPage() {
                   <TableBody>
                     {confirmedAppointments.map((app) => (
                       <TableRow key={app.id} hover>
-                        <TableCell sx={{ fontWeight: 500, py: 1.5 }}>{app.patient_name || `Patient #${app.patient}`}</TableCell>
+                        <TableCell sx={{ fontWeight: 500, py: 1.5 }}>
+                          {app.patient_name || `Patient #${app.patient}`}
+                        </TableCell>
                         <TableCell>{app.date}</TableCell>
                         <TableCell>{app.time || `Slot ${app.time_slot}`}</TableCell>
-                        <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <TableCell
+                          sx={{
+                            maxWidth: 200,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
                           {app.notes || '—'}
                         </TableCell>
                         <TableCell>{getStatusChip(app.status)}</TableCell>
@@ -209,7 +276,11 @@ export default function DoctorDashboardPage() {
               Past & Cancelled History
             </Typography>
             {cancelledAppointments.length === 0 ? (
-              <Typography variant="body2" color="text.secondary" sx={{ py: 2, fontStyle: 'italic' }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ py: 2, fontStyle: 'italic' }}
+              >
                 No cancelled or past appointment logs.
               </Typography>
             ) : (
@@ -227,11 +298,19 @@ export default function DoctorDashboardPage() {
                   <TableBody>
                     {cancelledAppointments.map((app) => (
                       <TableRow key={app.id} hover>
-                        <TableCell sx={{ py: 1.5 }}>{app.patient_name || `Patient #${app.patient}`}</TableCell>
+                        <TableCell sx={{ py: 1.5 }}>
+                          {app.patient_name || `Patient #${app.patient}`}
+                        </TableCell>
                         <TableCell>{app.date}</TableCell>
                         <TableCell>{app.time || `Slot ${app.time_slot}`}</TableCell>
                         <TableCell>{getStatusChip(app.status)}</TableCell>
-                        <TableCell sx={{ maxWidth: 250, fontStyle: app.doctor_notes ? 'normal' : 'italic', color: 'text.secondary' }}>
+                        <TableCell
+                          sx={{
+                            maxWidth: 250,
+                            fontStyle: app.doctor_notes ? 'normal' : 'italic',
+                            color: 'text.secondary',
+                          }}
+                        >
                           {app.doctor_notes ? (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                               <DescriptionIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
@@ -249,7 +328,6 @@ export default function DoctorDashboardPage() {
             )}
           </Paper>
         </Grid>
-
       </Grid>
     </Box>
   );

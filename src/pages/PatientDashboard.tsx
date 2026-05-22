@@ -63,8 +63,14 @@ const PatientDashboard: React.FC = () => {
   const upcomingPages = Math.ceil(upcoming.length / ITEMS_PER_PAGE);
   const historyPages = Math.ceil(history.length / ITEMS_PER_PAGE);
 
-  const displayedUpcoming = upcoming.slice((upcomingPage - 1) * ITEMS_PER_PAGE, upcomingPage * ITEMS_PER_PAGE);
-  const displayedHistory = history.slice((historyPage - 1) * ITEMS_PER_PAGE, historyPage * ITEMS_PER_PAGE);
+  const displayedUpcoming = upcoming.slice(
+    (upcomingPage - 1) * ITEMS_PER_PAGE,
+    upcomingPage * ITEMS_PER_PAGE,
+  );
+  const displayedHistory = history.slice(
+    (historyPage - 1) * ITEMS_PER_PAGE,
+    historyPage * ITEMS_PER_PAGE,
+  );
 
   return (
     <Box sx={{ p: 3 }}>
@@ -74,7 +80,9 @@ const PatientDashboard: React.FC = () => {
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <Paper sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+          >
             <Typography variant="h5">Upcoming Appointments</Typography>
           </Box>
           <Divider sx={{ mb: 2 }} />
@@ -84,35 +92,64 @@ const PatientDashboard: React.FC = () => {
             <>
               {displayedUpcoming.map((a) => (
                 <Paper key={a.id} sx={{ p: 2, mb: 2 }} elevation={2}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{a.doctor_name || 'Doctor'}</Typography>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                    {a.doctor_name || 'Doctor'}
+                  </Typography>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     {a.specialty}
                   </Typography>
-                  <Typography variant="body1">{formatDate(a.date)} — {a.time}</Typography>
+                  <Typography variant="body1">
+                    {formatDate(a.date)} — {a.time}
+                  </Typography>
                   <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
                     Status: <span style={{ fontWeight: 'bold' }}>{a.status.toUpperCase()}</span>
                   </Typography>
-                  <Box sx={{ mt: 2, display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <Button size="small" variant="outlined" onClick={() => navigate(`/appointments/${a.id}`)}>View Details</Button>
+                  <Box
+                    sx={{ mt: 2, display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}
+                  >
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => navigate(`/appointments/${a.id}`)}
+                    >
+                      View Details
+                    </Button>
                     {a.status === 'pending' && (
                       <>
-                        <Chip label="⏳ PENDING PAYMENT" color="warning" size="small" sx={{ fontWeight: 'bold' }} />
-                        <Button size="small" variant="contained" color="primary" onClick={() => navigate(`/payment/${a.id}`)}>Pay Now</Button>
+                        <Chip
+                          label="⏳ PENDING PAYMENT"
+                          color="warning"
+                          size="small"
+                          sx={{ fontWeight: 'bold' }}
+                        />
+                        <Button
+                          size="small"
+                          variant="contained"
+                          color="primary"
+                          onClick={() => navigate(`/payment/${a.id}`)}
+                        >
+                          Pay Now
+                        </Button>
                       </>
                     )}
                     {a.status === 'confirmed' && (
-                      <Chip label="✓ PAID & CONFIRMED" color="success" size="small" sx={{ fontWeight: 'bold' }} />
+                      <Chip
+                        label="✓ PAID & CONFIRMED"
+                        color="success"
+                        size="small"
+                        sx={{ fontWeight: 'bold' }}
+                      />
                     )}
                   </Box>
                 </Paper>
               ))}
               {upcomingPages > 1 && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                  <Pagination 
-                    count={upcomingPages} 
-                    page={upcomingPage} 
-                    onChange={(_, p) => setUpcomingPage(p)} 
-                    color="primary" 
+                  <Pagination
+                    count={upcomingPages}
+                    page={upcomingPage}
+                    onChange={(_, p) => setUpcomingPage(p)}
+                    color="primary"
                   />
                 </Box>
               )}
@@ -121,7 +158,9 @@ const PatientDashboard: React.FC = () => {
         </Paper>
 
         <Paper sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+          >
             <Typography variant="h5">Appointment History</Typography>
           </Box>
           <Divider sx={{ mb: 2 }} />
@@ -130,12 +169,21 @@ const PatientDashboard: React.FC = () => {
           ) : (
             <>
               {displayedHistory.map((a) => (
-                <Paper key={a.id} sx={{ p: 2, mb: 2, bgcolor: 'background.default' }} elevation={0} variant="outlined">
-                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>{a.doctor_name || 'Doctor'}</Typography>
+                <Paper
+                  key={a.id}
+                  sx={{ p: 2, mb: 2, bgcolor: 'background.default' }}
+                  elevation={0}
+                  variant="outlined"
+                >
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                    {a.doctor_name || 'Doctor'}
+                  </Typography>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     {a.specialty}
                   </Typography>
-                  <Typography variant="body2">{formatDate(a.date)} — {a.time}</Typography>
+                  <Typography variant="body2">
+                    {formatDate(a.date)} — {a.time}
+                  </Typography>
                   <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
                     Status: {a.status}
                   </Typography>
@@ -143,11 +191,11 @@ const PatientDashboard: React.FC = () => {
               ))}
               {historyPages > 1 && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                  <Pagination 
-                    count={historyPages} 
-                    page={historyPage} 
-                    onChange={(_, p) => setHistoryPage(p)} 
-                    color="primary" 
+                  <Pagination
+                    count={historyPages}
+                    page={historyPage}
+                    onChange={(_, p) => setHistoryPage(p)}
+                    color="primary"
                   />
                 </Box>
               )}

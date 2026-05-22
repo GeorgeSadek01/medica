@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Paper, Typography, TextField, Button, CircularProgress, Divider, InputAdornment, Container, Alert } from '@mui/material';
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  CircularProgress,
+  Divider,
+  InputAdornment,
+  Container,
+  Alert,
+} from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import appointmentService from '../services/appointment.service';
 import doctorService from '../services/doctor.service';
@@ -14,7 +25,7 @@ const PaymentPage: React.FC = () => {
   const [appointment, setAppointment] = useState<any | null>(null);
   const [doctorInfo, setDoctorInfo] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   const [cardName, setCardName] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
@@ -38,7 +49,7 @@ const PaymentPage: React.FC = () => {
   const handlePay = async () => {
     if (!id) return;
     setError(''); // clear previous errors
-    
+
     if (!cardName.trim()) {
       setError('Please enter the name on the card');
       return;
@@ -47,7 +58,7 @@ const PaymentPage: React.FC = () => {
       setError('Please enter valid card details (16-digit card number, MM/YY expiry, 3-digit CVV)');
       return;
     }
-    
+
     await appointmentService.confirm(Number(id));
     navigate('/dashboard/patient');
   };
@@ -83,8 +94,14 @@ const PaymentPage: React.FC = () => {
     setCvv(val);
   };
 
-  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>;
-  if (!appointment) return <Typography sx={{ p: 3, textAlign: 'center' }}>Appointment not found.</Typography>;
+  if (loading)
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
+        <CircularProgress />
+      </Box>
+    );
+  if (!appointment)
+    return <Typography sx={{ p: 3, textAlign: 'center' }}>Appointment not found.</Typography>;
 
   return (
     <Container maxWidth="sm" sx={{ py: 6 }}>
@@ -98,7 +115,18 @@ const PaymentPage: React.FC = () => {
           </Typography>
         </Box>
 
-        <Box sx={{ bgcolor: 'primary.light', color: 'primary.contrastText', p: 3, borderRadius: 2, mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box
+          sx={{
+            bgcolor: 'primary.light',
+            color: 'primary.contrastText',
+            p: 3,
+            borderRadius: 2,
+            mb: 4,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <Typography variant="h6">Total Amount</Typography>
           <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
             {doctorInfo?.session_price ? `${doctorInfo.session_price} EGP` : 'Free'}
@@ -106,13 +134,13 @@ const PaymentPage: React.FC = () => {
         </Box>
 
         <Divider sx={{ mb: error ? 2 : 4 }}>Payment Details</Divider>
-        
+
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
           </Alert>
         )}
-        
+
         <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <TextField
             label="Name on Card"
@@ -127,7 +155,7 @@ const PaymentPage: React.FC = () => {
                     <PersonIcon color="action" />
                   </InputAdornment>
                 ),
-              }
+              },
             }}
           />
           <TextField
@@ -144,7 +172,7 @@ const PaymentPage: React.FC = () => {
                     <CreditCardIcon color="action" />
                   </InputAdornment>
                 ),
-              }
+              },
             }}
           />
           <Box sx={{ display: 'flex', gap: 3 }}>
@@ -162,7 +190,7 @@ const PaymentPage: React.FC = () => {
                       <CalendarMonthIcon color="action" />
                     </InputAdornment>
                   ),
-                }
+                },
               }}
             />
             <TextField
@@ -180,25 +208,25 @@ const PaymentPage: React.FC = () => {
                       <LockIcon color="action" />
                     </InputAdornment>
                   ),
-                }
+                },
               }}
             />
           </Box>
-          
+
           <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-            <Button 
-              variant="outlined" 
-              fullWidth 
-              size="large" 
+            <Button
+              variant="outlined"
+              fullWidth
+              size="large"
               onClick={handlePayLater}
               sx={{ borderRadius: 2, py: 1.5, fontWeight: 'bold' }}
             >
               Pay Later
             </Button>
-            <Button 
-              variant="contained" 
-              fullWidth 
-              size="large" 
+            <Button
+              variant="contained"
+              fullWidth
+              size="large"
               onClick={handlePay}
               sx={{ borderRadius: 2, py: 1.5, fontWeight: 'bold' }}
             >

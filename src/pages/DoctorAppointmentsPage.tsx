@@ -67,8 +67,8 @@ export default function DoctorAppointmentsPage() {
       setLoading(true);
       const allApps = await appointmentService.getAll().catch(() => []);
       const allDoctors = await doctorService.getAll().catch(() => []);
-      const currentDoc = allDoctors.find(d => d.contact === user?.email);
-      
+      const currentDoc = allDoctors.find((d) => d.contact === user?.email);
+
       if (currentDoc) {
         setAppointments(allApps.filter((app: any) => Number(app.doctor) === Number(currentDoc.id)));
       } else {
@@ -101,10 +101,13 @@ export default function DoctorAppointmentsPage() {
     handleMenuClose();
     try {
       await appointmentService.confirm(appId);
-      
+
       await appointmentService.addNotes(appId, '');
-      
-      setAlert({ type: 'success', text: 'Appointment status updated to Confirmed and notes cleared! ' });
+
+      setAlert({
+        type: 'success',
+        text: 'Appointment status updated to Confirmed and notes cleared! ',
+      });
       loadAppointments();
     } catch {
       setAlert({ type: 'error', text: 'Failed to confirm appointment.' });
@@ -145,14 +148,19 @@ export default function DoctorAppointmentsPage() {
   };
 
   const getStatusChip = (status: string) => {
-    const configs: Record<string, { label: string; color: 'warning' | 'success' | 'error' | 'info' | 'default' }> = {
+    const configs: Record<
+      string,
+      { label: string; color: 'warning' | 'success' | 'error' | 'info' | 'default' }
+    > = {
       pending: { label: 'Pending Review', color: 'warning' },
       confirmed: { label: 'Confirmed', color: 'success' },
       cancelled: { label: 'Cancelled', color: 'error' },
       completed: { label: 'Completed', color: 'info' },
     };
     const config = configs[status] || { label: status, color: 'default' };
-    return <Chip label={config.label} color={config.color} size="small" sx={{ fontWeight: 'bold' }} />;
+    return (
+      <Chip label={config.label} color={config.color} size="small" sx={{ fontWeight: 'bold' }} />
+    );
   };
 
   return (
@@ -171,7 +179,9 @@ export default function DoctorAppointmentsPage() {
       )}
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}><CircularProgress /></Box>
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+          <CircularProgress />
+        </Box>
       ) : (
         <TableContainer component={Paper} sx={{ borderRadius: 3, elevation: 2 }}>
           <Table>
@@ -196,18 +206,35 @@ export default function DoctorAppointmentsPage() {
               ) : (
                 appointments.map((app) => (
                   <TableRow key={app.id} hover>
-                    <TableCell sx={{ fontWeight: 500 }}>{app.patient_name || `Patient #${app.patient}`}</TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>
+                      {app.patient_name || `Patient #${app.patient}`}
+                    </TableCell>
                     <TableCell>{app.date}</TableCell>
                     <TableCell>{app.time || `Slot ${app.time_slot}`}</TableCell>
-                    <TableCell sx={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <TableCell
+                      sx={{
+                        maxWidth: 150,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       {app.notes || '—'}
                     </TableCell>
                     <TableCell>{getStatusChip(app.status)}</TableCell>
-                    <TableCell sx={{ fontStyle: app.doctor_notes ? 'normal' : 'italic', color: 'text.secondary', maxWidth: 180 }}>
+                    <TableCell
+                      sx={{
+                        fontStyle: app.doctor_notes ? 'normal' : 'italic',
+                        color: 'text.secondary',
+                        maxWidth: 180,
+                      }}
+                    >
                       {app.doctor_notes ? (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                           <DescriptionIcon sx={{ fontSize: 16, color: 'info.main' }} />
-                          <Typography variant="body2" noWrap>{app.doctor_notes}</Typography>
+                          <Typography variant="body2" noWrap>
+                            {app.doctor_notes}
+                          </Typography>
                         </Box>
                       ) : (
                         'No diagnosis written.'
@@ -241,26 +268,47 @@ export default function DoctorAppointmentsPage() {
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <MenuItem onClick={handleSelectConfirm} sx={{ color: 'success.main' }}>
-          <ListItemIcon><CheckIcon fontSize="small" color="success" /></ListItemIcon>
-          <ListItemText primary="Approve & Confirm" primaryTypographyProps={{ fontWeight: '500' }} />
+          <ListItemIcon>
+            <CheckIcon fontSize="small" color="success" />
+          </ListItemIcon>
+          <ListItemText
+            primary="Approve & Confirm"
+            primaryTypographyProps={{ fontWeight: '500' }}
+          />
         </MenuItem>
 
         <MenuItem onClick={handleSelectReject} sx={{ color: 'error.main' }}>
-          <ListItemIcon><CloseIcon fontSize="small" color="error" /></ListItemIcon>
+          <ListItemIcon>
+            <CloseIcon fontSize="small" color="error" />
+          </ListItemIcon>
           <ListItemText primary="Reject & Cancel" primaryTypographyProps={{ fontWeight: '500' }} />
         </MenuItem>
 
         <MenuItem onClick={handleSelectAddNotes} sx={{ color: 'info.main' }}>
-          <ListItemIcon><NoteAddIcon fontSize="small" color="info" /></ListItemIcon>
-          <ListItemText primary="Add Notes / Diagnosis" primaryTypographyProps={{ fontWeight: '500' }} />
+          <ListItemIcon>
+            <NoteAddIcon fontSize="small" color="info" />
+          </ListItemIcon>
+          <ListItemText
+            primary="Add Notes / Diagnosis"
+            primaryTypographyProps={{ fontWeight: '500' }}
+          />
         </MenuItem>
       </Menu>
 
-      <Dialog open={isNotesOpen} onClose={() => { setIsNotesOpen(false); setActiveApp(null); }} fullWidth maxWidth="sm">
+      <Dialog
+        open={isNotesOpen}
+        onClose={() => {
+          setIsNotesOpen(false);
+          setActiveApp(null);
+        }}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle sx={{ fontWeight: 'bold' }}>Document Patient Encounter</DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Adding clinical records for: <strong>{activeApp?.patient_name || `Patient #${activeApp?.patient}`}</strong>
+            Adding clinical records for:{' '}
+            <strong>{activeApp?.patient_name || `Patient #${activeApp?.patient}`}</strong>
           </Typography>
           <TextField
             label="Doctor Clinical Notes & Prescription"
@@ -273,11 +321,19 @@ export default function DoctorAppointmentsPage() {
           />
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => { setIsNotesOpen(false); setActiveApp(null); }} sx={{ textTransform: 'none' }}>Cancel</Button>
-          <Button 
-            variant="contained" 
-            onClick={handleSaveNotes} 
-            disabled={!doctorNotes.trim()} 
+          <Button
+            onClick={() => {
+              setIsNotesOpen(false);
+              setActiveApp(null);
+            }}
+            sx={{ textTransform: 'none' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveNotes}
+            disabled={!doctorNotes.trim()}
             sx={{ textTransform: 'none', fontWeight: 'bold' }}
           >
             Save Diagnosis

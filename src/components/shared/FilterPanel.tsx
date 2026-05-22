@@ -17,12 +17,7 @@ interface FilterPanelProps {
   onChange: (value: string) => void;
 }
 
-const FilterPanel = ({
-  label,
-  value,
-  options,
-  onChange,
-}: FilterPanelProps) => {
+const FilterPanel = ({ label, value, options, onChange }: FilterPanelProps) => {
   const handleChange = (e: SelectChangeEvent) => {
     onChange(e.target.value);
   };

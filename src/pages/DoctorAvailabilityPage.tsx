@@ -56,7 +56,10 @@ export default function DoctorAvailabilityPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
-  const [alertMessage, setAlertMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [alertMessage, setAlertMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     const initAvailability = async () => {
@@ -65,7 +68,9 @@ export default function DoctorAvailabilityPage() {
         const allDoctors = await doctorService.getAll().catch(() => []);
 
         const currentDoctor = allDoctors.find(
-          (d) => d.contact === user?.email || `${d.first_name} ${d.last_name}` === `${user?.first_name} ${user?.last_name}`
+          (d) =>
+            d.contact === user?.email ||
+            `${d.first_name} ${d.last_name}` === `${user?.first_name} ${user?.last_name}`,
         );
 
         if (currentDoctor) {
@@ -91,7 +96,10 @@ export default function DoctorAvailabilityPage() {
   // add new slot
   const handleAddSlot = async () => {
     if (newSlot.start_time >= newSlot.end_time) {
-      setAlertMessage({ type: 'error', text: 'Shift End time must be after the Shift Start time!' });
+      setAlertMessage({
+        type: 'error',
+        text: 'Shift End time must be after the Shift Start time!',
+      });
       return;
     }
 
@@ -121,7 +129,7 @@ export default function DoctorAvailabilityPage() {
     if (!editingSlot) return;
 
     if (editingSlot.start_time >= editingSlot.end_time) {
-      setEditDialogError('End time cannot precede or equal start time.'); 
+      setEditDialogError('End time cannot precede or equal start time.');
       return;
     }
 
@@ -138,7 +146,7 @@ export default function DoctorAvailabilityPage() {
 
   const handleConfirmDeleteSlot = async () => {
     if (slotToDelete === null) return;
-    
+
     if (!doctorId) {
       setSlots((prev) => prev.filter((s) => s.id !== slotToDelete));
       setIsDeleteOpen(false);
@@ -158,7 +166,9 @@ export default function DoctorAvailabilityPage() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+      <Box
+        sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}
+      >
         <CircularProgress size={45} />
       </Box>
     );
@@ -171,7 +181,11 @@ export default function DoctorAvailabilityPage() {
       </Typography>
 
       {alertMessage && (
-        <Alert severity={alertMessage.type} sx={{ mb: 3, borderRadius: 2 }} onClose={() => setAlertMessage(null)}>
+        <Alert
+          severity={alertMessage.type}
+          sx={{ mb: 3, borderRadius: 2 }}
+          onClose={() => setAlertMessage(null)}
+        >
           {alertMessage.text}
         </Alert>
       )}
@@ -200,7 +214,9 @@ export default function DoctorAvailabilityPage() {
                 }}
               >
                 {DAYS_OF_WEEK.map((d) => (
-                  <MenuItem key={d} value={d}>{d}</MenuItem>
+                  <MenuItem key={d} value={d}>
+                    {d}
+                  </MenuItem>
                 ))}
               </TextField>
 
@@ -251,10 +267,18 @@ export default function DoctorAvailabilityPage() {
                     <ListItem
                       secondaryAction={
                         <Box sx={{ display: 'flex', gap: 1 }}>
-                          <IconButton edge="end" color="primary" onClick={() => handleOpenEdit(slot)}>
+                          <IconButton
+                            edge="end"
+                            color="primary"
+                            onClick={() => handleOpenEdit(slot)}
+                          >
                             <EditIcon />
                           </IconButton>
-                          <IconButton edge="end" color="error" onClick={() => handleOpenDeleteConfirm(slot.id)}>
+                          <IconButton
+                            edge="end"
+                            color="error"
+                            onClick={() => handleOpenDeleteConfirm(slot.id)}
+                          >
                             <DeleteIcon />
                           </IconButton>
                         </Box>
@@ -264,7 +288,10 @@ export default function DoctorAvailabilityPage() {
                         primary={slot.day}
                         primaryTypographyProps={{ fontWeight: 'bold', color: 'primary.main' }}
                         secondary={
-                          <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                          <Box
+                            component="span"
+                            sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}
+                          >
                             <AccessTimeIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                             {slot.start_time} - {slot.end_time}
                           </Box>
@@ -289,7 +316,7 @@ export default function DoctorAvailabilityPage() {
               {editDialogError}
             </Alert>
           )}
-          
+
           {editingSlot && (
             <>
               <TextField
@@ -298,13 +325,15 @@ export default function DoctorAvailabilityPage() {
                 value={editingSlot.day}
                 onChange={(e) => {
                   setEditDialogError(null);
-                  setEditingSlot(p => p ? { ...p, day: e.target.value } : null);
+                  setEditingSlot((p) => (p ? { ...p, day: e.target.value } : null));
                 }}
                 fullWidth
                 sx={{ mt: 1 }}
               >
                 {DAYS_OF_WEEK.map((d) => (
-                  <MenuItem key={d} value={d}>{d}</MenuItem>
+                  <MenuItem key={d} value={d}>
+                    {d}
+                  </MenuItem>
                 ))}
               </TextField>
               <TextField
@@ -313,7 +342,7 @@ export default function DoctorAvailabilityPage() {
                 value={editingSlot.start_time}
                 onChange={(e) => {
                   setEditDialogError(null);
-                  setEditingSlot(p => p ? { ...p, start_time: e.target.value } : null);
+                  setEditingSlot((p) => (p ? { ...p, start_time: e.target.value } : null));
                 }}
                 fullWidth
                 slotProps={{ inputLabel: { shrink: true } }}
@@ -324,7 +353,7 @@ export default function DoctorAvailabilityPage() {
                 value={editingSlot.end_time}
                 onChange={(e) => {
                   setEditDialogError(null);
-                  setEditingSlot(p => p ? { ...p, end_time: e.target.value } : null);
+                  setEditingSlot((p) => (p ? { ...p, end_time: e.target.value } : null));
                 }}
                 fullWidth
                 slotProps={{ inputLabel: { shrink: true } }}
@@ -333,8 +362,12 @@ export default function DoctorAvailabilityPage() {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setIsEditOpen(false)} sx={{ textTransform: 'none' }}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveEditSlot} sx={{ textTransform: 'none' }}>Save Changes</Button>
+          <Button onClick={() => setIsEditOpen(false)} sx={{ textTransform: 'none' }}>
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleSaveEditSlot} sx={{ textTransform: 'none' }}>
+            Save Changes
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -343,12 +376,20 @@ export default function DoctorAvailabilityPage() {
         <DialogTitle sx={{ fontWeight: 'bold', color: 'error.main' }}>Delete Timeslot</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to remove this active working window from your weekly schedule? This action cannot be undone.
+            Are you sure you want to remove this active working window from your weekly schedule?
+            This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setIsDeleteOpen(false)} sx={{ textTransform: 'none' }}>Cancel</Button>
-          <Button onClick={handleConfirmDeleteSlot} variant="contained" color="error" sx={{ textTransform: 'none', fontWeight: 'bold' }}>
+          <Button onClick={() => setIsDeleteOpen(false)} sx={{ textTransform: 'none' }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDeleteSlot}
+            variant="contained"
+            color="error"
+            sx={{ textTransform: 'none', fontWeight: 'bold' }}
+          >
             Delete
           </Button>
         </DialogActions>

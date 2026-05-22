@@ -3,6 +3,7 @@
 A healthcare appointment booking system built with a React frontend and a Django REST Framework backend. The project supports role-based users (Admin, Doctor, Patient), JWT authentication, doctor availability scheduling, appointment booking with conflict checks, and email notifications.
 
 **Table of contents**
+
 - **Overview**: Project summary and goals
 - **Features**: Functional requirements
 - **Tech Stack**: Frontend and backend technologies
@@ -40,6 +41,7 @@ This application provides a platform for patients to find doctors, view availabi
 **Getting Started**
 
 Prerequisites:
+
 - Node.js (16+), pnpm or npm
 - Python 3.9+
 - PostgreSQL (or another supported DB)
@@ -105,21 +107,25 @@ Authentication note: JWT can be stored in `httpOnly` cookies (recommended) or lo
 **API (examples)**
 
 Authentication:
+
 - `POST /api/auth/register/` — Register a user (role: patient/doctor)
 - `POST /api/auth/token/` — Obtain access and refresh tokens (simplejwt)
 - `POST /api/auth/token/refresh/` — Refresh access token
 
 Users & Profiles:
+
 - `GET /api/users/` — List users (admin)
 - `GET /api/users/{id}/` — User detail
 - `PATCH /api/users/{id}/` — Update profile
 
 Doctors & Specialties:
+
 - `GET /api/specialties/` — List specialties
 - `GET /api/doctors/` — List doctors (filter by specialty, name)
 - `GET /api/doctors/{id}/availability/` — Get doctor availability
 
 Appointments:
+
 - `POST /api/appointments/` — Book an appointment (validates availability)
 - `GET /api/appointments/` — List appointments (patient/doctor/admin filtered)
 - `PATCH /api/appointments/{id}/` — Update status (approve/reject/cancel)
@@ -215,7 +221,6 @@ pnpm run vite:dev
 pnpm run lint
 pnpm run format
 ```
-
 
 ## Building for Production
 

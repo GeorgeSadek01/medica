@@ -11,11 +11,7 @@ interface SearchBarProps {
   defaultValue?: string;
 }
 
-const SearchBar = ({
-  placeholder = 'Search...',
-  onSearch,
-  defaultValue = '',
-}: SearchBarProps) => {
+const SearchBar = ({ placeholder = 'Search...', onSearch, defaultValue = '' }: SearchBarProps) => {
   const [value, setValue] = useState(defaultValue);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

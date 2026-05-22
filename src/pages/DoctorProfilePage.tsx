@@ -50,10 +50,13 @@ export default function DoctorProfilePage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
+
   // Validation
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [alertMessage, setAlertMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [alertMessage, setAlertMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     const initDoctorProfile = async () => {
@@ -62,7 +65,9 @@ export default function DoctorProfilePage() {
         const allDoctors = await doctorService.getAll().catch(() => []);
 
         const currentDoctor = allDoctors.find(
-          (d) => d.contact === user?.email || `${d.first_name} ${d.last_name}` === `${user?.first_name} ${user?.last_name}`
+          (d) =>
+            d.contact === user?.email ||
+            `${d.first_name} ${d.last_name}` === `${user?.first_name} ${user?.last_name}`,
         );
 
         if (currentDoctor) {
@@ -114,7 +119,7 @@ export default function DoctorProfilePage() {
 
   const validateForm = (): boolean => {
     const tempErrors: Record<string, string> = {};
-    
+
     if (!formData.contact.trim()) {
       tempErrors.contact = 'Contact / Phone number cannot be left empty.';
     } else if (formData.contact.length < 5) {
@@ -161,7 +166,9 @@ export default function DoctorProfilePage() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+      <Box
+        sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}
+      >
         <CircularProgress size={45} />
       </Box>
     );
@@ -174,16 +181,26 @@ export default function DoctorProfilePage() {
       </Typography>
 
       {alertMessage && (
-        <Alert severity={alertMessage.type} sx={{ mb: 3, borderRadius: 2 }} onClose={() => setAlertMessage(null)}>
+        <Alert
+          severity={alertMessage.type}
+          sx={{ mb: 3, borderRadius: 2 }}
+          onClose={() => setAlertMessage(null)}
+        >
           {alertMessage.text}
         </Alert>
       )}
 
-      <Paper elevation={2} component="form" onSubmit={handleProfileSubmit} noValidate sx={{ p: 4, borderRadius: 3, mb: 4 }}>
+      <Paper
+        elevation={2}
+        component="form"
+        onSubmit={handleProfileSubmit}
+        noValidate
+        sx={{ p: 4, borderRadius: 3, mb: 4 }}
+      >
         <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3 }}>
           Profile Information
         </Typography>
-        
+
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
             <TextField label="First Name" value={formData.first_name} fullWidth disabled />
@@ -206,7 +223,9 @@ export default function DoctorProfilePage() {
               }}
             >
               {MEDICAL_SPECIALTIES.map((option) => (
-                <MenuItem key={option} value={option}>{option}</MenuItem>
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
               ))}
             </TextField>
           </Box>
@@ -244,10 +263,10 @@ export default function DoctorProfilePage() {
           />
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button 
-              type="submit" 
-              variant="contained" 
-              disabled={saving} 
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={saving}
               size="medium"
               sx={{ px: 4, fontWeight: 'bold', textTransform: 'none', borderRadius: 2 }}
             >

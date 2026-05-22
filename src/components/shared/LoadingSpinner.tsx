@@ -7,10 +7,7 @@ interface LoadingSpinnerProps {
   fullScreen?: boolean;
 }
 
-const LoadingSpinner = ({
-  message = 'Loading...',
-  fullScreen = false,
-}: LoadingSpinnerProps) => {
+const LoadingSpinner = ({ message = 'Loading...', fullScreen = false }: LoadingSpinnerProps) => {
   return (
     <Box
       sx={{

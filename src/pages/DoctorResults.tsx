@@ -37,14 +37,24 @@ const DoctorResults: React.FC = () => {
         <Stack spacing={2} sx={{ mt: 2 }}>
           {doctors.map((d) => (
             <Card key={d.id} variant="outlined">
-              <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <CardContent
+                sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
                 <Box>
-                  <Typography variant="h6">{d.first_name} {d.last_name}</Typography>
-                  <Typography variant="body2" color="text.secondary">{d.specialty}</Typography>
-                  <Typography variant="body2" sx={{ mt: 1 }}>{d.bio}</Typography>
+                  <Typography variant="h6">
+                    {d.first_name} {d.last_name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {d.specialty}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    {d.bio}
+                  </Typography>
                 </Box>
                 <Box>
-                  <Button variant="contained" onClick={() => navigate(`/doctors/${d.id}`)}>View profile</Button>
+                  <Button variant="contained" onClick={() => navigate(`/doctors/${d.id}`)}>
+                    View profile
+                  </Button>
                 </Box>
               </CardContent>
             </Card>

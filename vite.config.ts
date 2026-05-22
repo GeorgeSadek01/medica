@@ -12,7 +12,7 @@ export default defineConfig({
         server.middlewares.use((req, res, next) => {
           if (req.url === '/api/appointments' && req.method === 'POST') {
             let body = '';
-            req.on('data', chunk => {
+            req.on('data', (chunk) => {
               body += chunk.toString();
             });
             req.on('end', () => {
@@ -25,9 +25,9 @@ export default defineConfig({
                 fs.writeFileSync(filePath, JSON.stringify(appointments, null, 2));
                 res.setHeader('Content-Type', 'application/json');
                 res.end(JSON.stringify(data));
-              } catch(e) {
+              } catch (e) {
                 res.statusCode = 500;
-                res.end("error");
+                res.end('error');
               }
             });
             return;
@@ -35,7 +35,9 @@ export default defineConfig({
           if (req.url?.startsWith('/api/appointments/') && req.method === 'PUT') {
             const id = parseInt(req.url.split('/').pop() || '0', 10);
             let body = '';
-            req.on('data', chunk => { body += chunk.toString(); });
+            req.on('data', (chunk) => {
+              body += chunk.toString();
+            });
             req.on('end', () => {
               try {
                 const data = JSON.parse(body);
@@ -48,17 +50,17 @@ export default defineConfig({
                 }
                 res.setHeader('Content-Type', 'application/json');
                 res.end(JSON.stringify(appointments[index] || {}));
-              } catch(e) {
+              } catch (e) {
                 res.statusCode = 500;
-                res.end("error");
+                res.end('error');
               }
             });
             return;
           }
           next();
         });
-      }
-    }
+      },
+    },
   ],
   resolve: {
     alias: {

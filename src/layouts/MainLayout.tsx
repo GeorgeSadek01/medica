@@ -27,7 +27,15 @@ function MainLayout() {
         bgcolor: 'background.default',
       }}
     >
-      <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+        }}
+      >
         <Navbar onSidebarToggle={handleDrawerToggle} />
       </Box>
 

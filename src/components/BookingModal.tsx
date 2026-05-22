@@ -72,11 +72,11 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
     rawBlocks.forEach((block) => {
       const [startH, startM] = (block.start_time || '00:00').split(':').map(Number);
       const [endH, endM] = (block.end_time || '23:59').split(':').map(Number);
-      
+
       let currentH = startH;
       let currentM = startM;
       let slotIndex = 0;
-      
+
       while (currentH < endH || (currentH === endH && currentM < endM)) {
         let nextH = currentH + 1;
         let nextM = currentM;
@@ -84,18 +84,18 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
           nextH = endH;
           nextM = endM;
         }
-        
+
         const sTime = `${String(currentH).padStart(2, '0')}:${String(currentM).padStart(2, '0')}`;
         const eTime = `${String(nextH).padStart(2, '0')}:${String(nextM).padStart(2, '0')}`;
-        
+
         generatedSlots.push({
           id: `${block.id}-${slotIndex}`,
           start_time: sTime,
           end_time: eTime,
           day: block.day,
-          originalBlockId: block.id
+          originalBlockId: block.id,
         });
-        
+
         currentH = nextH;
         currentM = nextM;
         slotIndex++;
@@ -222,8 +222,16 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
 
                 try {
                   // construct local dates to compare (avoid timezone offsets)
-                  const sel = new Date(y || Number(normalized.split('-')[0]), (m || Number(normalized.split('-')[1])) - 1, d || Number(normalized.split('-')[2]));
-                  const min = new Date(minDate.split('-')[0] as unknown as number, Number(minDate.split('-')[1]) - 1, Number(minDate.split('-')[2]));
+                  const sel = new Date(
+                    y || Number(normalized.split('-')[0]),
+                    (m || Number(normalized.split('-')[1])) - 1,
+                    d || Number(normalized.split('-')[2]),
+                  );
+                  const min = new Date(
+                    minDate.split('-')[0] as unknown as number,
+                    Number(minDate.split('-')[1]) - 1,
+                    Number(minDate.split('-')[2]),
+                  );
                   if (isNaN(sel.getTime())) {
                     setDate(minDate);
                   } else if (sel.getTime() < min.getTime()) {
@@ -242,8 +250,12 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
 
           <Typography sx={{ mt: 2 }}>Available slots for selected date:</Typography>
           {alreadyBooked && (
-            <Typography color="warning.main" sx={{ mt: 1, mb: 1, fontSize: '0.875rem', fontWeight: 'bold' }}>
-              ⚠️ You already have an appointment with this doctor on this day. You cannot book another.
+            <Typography
+              color="warning.main"
+              sx={{ mt: 1, mb: 1, fontSize: '0.875rem', fontWeight: 'bold' }}
+            >
+              ⚠️ You already have an appointment with this doctor on this day. You cannot book
+              another.
             </Typography>
           )}
           <List>
@@ -254,7 +266,11 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
             )}
             {slotsForDate.map((s) => (
               <ListItem key={s.id} disablePadding>
-                <ListItemButton selected={selectedSlot?.id === s.id} onClick={() => setSelectedSlot(s)} disabled={alreadyBooked}>
+                <ListItemButton
+                  selected={selectedSlot?.id === s.id}
+                  onClick={() => setSelectedSlot(s)}
+                  disabled={alreadyBooked}
+                >
                   <ListItemText primary={`${s.start_time} — ${s.end_time}`} secondary={s.day} />
                 </ListItemButton>
               </ListItem>
@@ -274,12 +290,16 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={confirmOpen} onClose={() => { setConfirmOpen(false); setBookingError(''); }}>
+      <Dialog
+        open={confirmOpen}
+        onClose={() => {
+          setConfirmOpen(false);
+          setBookingError('');
+        }}
+      >
         <DialogTitle>Confirm Booking</DialogTitle>
         <DialogContent>
-          <Typography>
-            Date: {date}
-          </Typography>
+          <Typography>Date: {date}</Typography>
           <Typography>
             Time: {selectedSlot?.start_time} — {selectedSlot?.end_time}
           </Typography>
@@ -295,8 +315,17 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => { setConfirmOpen(false); setBookingError(''); }}>Cancel</Button>
-          <Button variant="contained" onClick={handleBook}>Proceed to Payment</Button>
+          <Button
+            onClick={() => {
+              setConfirmOpen(false);
+              setBookingError('');
+            }}
+          >
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleBook}>
+            Proceed to Payment
+          </Button>
         </DialogActions>
       </Dialog>
     </>

@@ -26,13 +26,19 @@ const DoctorProfile: React.FC = () => {
   return (
     <Box sx={{ p: 3 }}>
       <Paper sx={{ p: 3 }}>
-        <Typography variant="h4">{doctor.first_name} {doctor.last_name}</Typography>
+        <Typography variant="h4">
+          {doctor.first_name} {doctor.last_name}
+        </Typography>
         <Typography color="text.secondary">{doctor.specialty}</Typography>
         <Typography sx={{ mt: 2 }}>{doctor.bio}</Typography>
         {doctor.session_price && (
-          <Typography sx={{ mt: 2, fontWeight: 'bold' }}>Session Price: {doctor.session_price} EGP</Typography>
+          <Typography sx={{ mt: 2, fontWeight: 'bold' }}>
+            Session Price: {doctor.session_price} EGP
+          </Typography>
         )}
-        <Button sx={{ mt: 2 }} variant="contained" onClick={() => setBookingOpen(true)}>Book Appointment</Button>
+        <Button sx={{ mt: 2 }} variant="contained" onClick={() => setBookingOpen(true)}>
+          Book Appointment
+        </Button>
         <BookingModal
           open={bookingOpen}
           onClose={() => setBookingOpen(false)}
