@@ -31,6 +31,21 @@ function seed(): void {
     if (currentDoctors.length > 0 && !('session_price' in currentDoctors[0])) {
       localStorage.setItem(`${DB_PREFIX}doctors`, JSON.stringify(seedDoctors));
     }
+    // Ensure admin user exists (added after initial seed)
+    const users = getCollection('users');
+    if (!users.find((u: any) => u.email === 'admin@medica.com')) {
+      const maxId = Math.max(...users.map((u: any) => u.id), 0);
+      users.push({
+        id: maxId + 1,
+        email: 'admin@medica.com',
+        password: 'password123',
+        first_name: 'Admin',
+        last_name: 'User',
+        role: 'admin',
+        phone: '',
+      } as any);
+      saveCollection('users', users);
+    }
     return;
   }
 
@@ -43,7 +58,7 @@ function seed(): void {
     password: string;
     first_name: string;
     last_name: string;
-    role: 'doctor' | 'patient';
+    role: 'doctor' | 'patient' | 'admin';
     phone?: string;
   }> = seedDoctors.map((doc) => ({
     id: doc.id,
