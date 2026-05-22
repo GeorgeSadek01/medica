@@ -39,10 +39,6 @@ const Navbar = ({ onSidebarToggle }: NavbarProps) => {
     navigate('/login', { replace: true });
   };
 
-  const handleProfile = () => {
-    handleMenuClose();
-    navigate('/profile');
-  };
 
   return (
     <AppBar position="sticky">
@@ -94,7 +90,6 @@ const Navbar = ({ onSidebarToggle }: NavbarProps) => {
                 </Typography>
               </MenuItem>
               <Divider />
-              <MenuItem onClick={handleProfile}>My Profile</MenuItem>
               <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
                 Logout
               </MenuItem>
