@@ -31,6 +31,14 @@ function seed(): void {
     if (currentDoctors.length > 0 && !('session_price' in currentDoctors[0])) {
       localStorage.setItem(`${DB_PREFIX}doctors`, JSON.stringify(seedDoctors));
     }
+    if (currentDoctors.length !== seedDoctors.length) {
+      localStorage.setItem(`${DB_PREFIX}doctors`, JSON.stringify(seedDoctors));
+      const specialties = [...new Set(seedDoctors.map((d) => d.specialty))].map((name, i) => ({
+        id: i + 1,
+        name,
+      }));
+      localStorage.setItem(`${DB_PREFIX}specialties`, JSON.stringify(specialties));
+    }
     return;
   }
 

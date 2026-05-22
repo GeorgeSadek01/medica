@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Typography, Card, CardContent, Button, Stack } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Box, Typography, Card, CardContent, Button, Stack, Pagination } from '@mui/material';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import doctorService from '../services/doctor.service';
 
@@ -11,10 +11,13 @@ interface Doctor {
   bio: string;
 }
 
-const DoctorResults: React.FC = () => {
+const ITEMS_PER_PAGE = 5;
+
+function DoctorResults() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     (async () => {
@@ -25,6 +28,9 @@ const DoctorResults: React.FC = () => {
     })();
   }, [searchParams]);
 
+  const totalPages = Math.ceil(doctors.length / ITEMS_PER_PAGE);
+  const displayed = doctors.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
@@ -34,35 +40,52 @@ const DoctorResults: React.FC = () => {
       {doctors.length === 0 ? (
         <Typography color="text.secondary">No doctors found.</Typography>
       ) : (
-        <Stack spacing={2} sx={{ mt: 2 }}>
-          {doctors.map((d) => (
-            <Card key={d.id} variant="outlined">
-              <CardContent
-                sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-              >
-                <Box>
-                  <Typography variant="h6">
-                    {d.first_name} {d.last_name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {d.specialty}
-                  </Typography>
-                  <Typography variant="body2" sx={{ mt: 1 }}>
-                    {d.bio}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Button variant="contained" onClick={() => navigate(`/doctors/${d.id}`)}>
-                    View profile
-                  </Button>
-                </Box>
-              </CardContent>
-            </Card>
-          ))}
-        </Stack>
+        <>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {doctors.length} doctor{doctors.length !== 1 ? 's' : ''} found
+          </Typography>
+
+          <Stack spacing={2}>
+            {displayed.map((d) => (
+              <Card key={d.id} variant="outlined">
+                <CardContent
+                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <Box>
+                    <Typography variant="h6">
+                      {d.first_name} {d.last_name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {d.specialty}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                      {d.bio}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Button variant="contained" onClick={() => navigate(`/doctors/${d.id}`)}>
+                      View profile
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            ))}
+          </Stack>
+
+          {totalPages > 1 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={(_, p) => setPage(p)}
+                color="primary"
+              />
+            </Box>
+          )}
+        </>
       )}
     </Box>
   );
-};
+}
 
 export default DoctorResults;
