@@ -7,7 +7,7 @@ export interface User {
   email: string;
   first_name?: string;
   last_name?: string;
-  role: 'patient' | 'doctor';
+  role: 'patient' | 'doctor' | 'admin';
   phone?: string;
   avatar?: string;
 }

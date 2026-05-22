@@ -21,10 +21,10 @@ import { selectUser } from '../../store/authSlice';
 const DRAWER_WIDTH = 240;
 
 const patientLinks = [
-  { label: 'Dashboard',    path: '/dashboard/patient', icon: <DashboardIcon /> },
-  { label: 'Find Doctors', path: '/',                  icon: <LocalHospitalIcon /> },
-  { label: 'Appointments', path: '/dashboard/patient', icon: <CalendarMonthIcon /> },
-  { label: 'My Profile',   path: '/profile/patient',   icon: <PersonIcon /> },
+  { label: 'Dashboard',    path: '/dashboard/patient',  icon: <DashboardIcon /> },
+  { label: 'Find Doctors', path: '/',                   icon: <LocalHospitalIcon /> },
+  { label: 'Appointments', path: '/appointments/patient', icon: <CalendarMonthIcon /> },
+  { label: 'My Profile',   path: '/profile/patient',    icon: <PersonIcon /> },
 ];
 
 const doctorLinks = [

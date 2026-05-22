@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -20,7 +20,9 @@ import type { LoginFormData } from '../validations';
 function LoginPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { loading, error } = useAppSelector(selectAuth);
+  const redirectMessage = searchParams.get('message');
 
   const [form, setForm] = useState<LoginFormData>({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
@@ -65,12 +67,25 @@ function LoginPage() {
 
     const result = await dispatch(loginUser(form));
     if (loginUser.fulfilled.match(result)) {
-      navigate('/', { replace: true });
+      const role = result.payload?.role;
+      if (role === 'doctor') {
+        navigate('/doctor/dashboard', { replace: true });
+      } else if (role === 'admin') {
+        navigate('/admin/dashboard', { replace: true });
+      } else {
+        navigate('/dashboard/patient', { replace: true });
+      }
     }
   };
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate>
+      {redirectMessage && (
+        <Alert severity="info" sx={{ mb: 2 }} onClose={() => navigate('/login', { replace: true })}>
+          {redirectMessage}
+        </Alert>
+      )}
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
