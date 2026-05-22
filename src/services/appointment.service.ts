@@ -26,8 +26,6 @@ interface BookAppointmentData {
 interface RescheduleData {
   date: string;
   time_slot: number | string;
-<<<<<<< HEAD
-=======
 }
 
 interface AvailabilityBlock {
@@ -78,17 +76,14 @@ function updateAvailabilityForBooking(
   const result = [...availability];
 
   if (booked === blockStart && bookedEnd >= blockEnd) {
-    // Full block booked — remove it
     result.splice(idx, 1);
   } else if (booked === blockStart) {
-    // Booked at start — advance start_time
     result[idx] = { ...block, start_time: minutesToTime(bookedEnd) };
   } else if (bookedEnd >= blockEnd) {
-    // Booked at end — reduce end_time
     result[idx] = { ...block, end_time: bookedTime };
   } else {
-    // Booked in the middle — split
-    const nextId = Math.max(...availability.map((b) => b.id), 0) + 1 + Math.floor(Math.random() * 1000);
+    const nextId =
+      Math.max(...availability.map((b) => b.id), 0) + 1 + Math.floor(Math.random() * 1000);
     result[idx] = { ...block, end_time: bookedTime };
     result.splice(idx + 1, 0, {
       id: nextId,
@@ -109,11 +104,9 @@ function restoreAvailabilityForCancellation(
   const cancelledStart = timeToMinutes(cancelledTime);
   const cancelledEnd = cancelledStart + 60;
 
-  // Check if we can merge with a block ending exactly at cancelledTime
   const beforeIdx = availability.findIndex(
     (b) => b.day === weekday && timeToMinutes(b.end_time) === cancelledStart,
   );
-  // Check if we can merge with a block starting exactly at cancelledEnd
   const afterIdx = availability.findIndex(
     (b) => b.day === weekday && timeToMinutes(b.start_time) === cancelledEnd,
   );
@@ -121,7 +114,6 @@ function restoreAvailabilityForCancellation(
   const result = [...availability];
 
   if (beforeIdx !== -1 && afterIdx !== -1) {
-    // Merge both blocks and the cancelled slot into one
     const merged = {
       id: result[beforeIdx].id,
       day: weekday,
@@ -133,19 +125,21 @@ function restoreAvailabilityForCancellation(
     result.splice(hi, 1);
     result.splice(lo, 1, merged);
   } else if (beforeIdx !== -1) {
-    // Extend the before block
     result[beforeIdx] = { ...result[beforeIdx], end_time: minutesToTime(cancelledEnd) };
   } else if (afterIdx !== -1) {
-    // Extend the after block backward
     result[afterIdx] = { ...result[afterIdx], start_time: cancelledTime };
   } else {
-    // No merge possible — add a new block
-    const nextId = Math.max(...availability.map((b) => b.id), 0) + 1 + Math.floor(Math.random() * 1000);
-    result.push({ id: nextId, day: weekday, start_time: cancelledTime, end_time: minutesToTime(cancelledEnd) });
+    const nextId =
+      Math.max(...availability.map((b) => b.id), 0) + 1 + Math.floor(Math.random() * 1000);
+    result.push({
+      id: nextId,
+      day: weekday,
+      start_time: cancelledTime,
+      end_time: minutesToTime(cancelledEnd),
+    });
   }
 
   return result;
->>>>>>> 2b2ec0a (feat: add patient profile page with edit and image upload, improve appointment availability management)
 }
 
 const appointmentService = {
@@ -157,11 +151,9 @@ const appointmentService = {
     return db.getById<Appointment>('appointments', id);
   },
 
-  book: async (data: BookAppointmentData & { patient?: number; patient_name?: string; time?: string }) => {
-<<<<<<< HEAD
-    // Guard: prevent a patient from booking the same doctor twice on the same day
-=======
->>>>>>> 2b2ec0a (feat: add patient profile page with edit and image upload, improve appointment availability management)
+  book: async (
+    data: BookAppointmentData & { patient?: number; patient_name?: string; time?: string },
+  ) => {
     if (data.patient) {
       const existing = await db.getAll<Appointment>('appointments');
       const duplicate = existing.some(
@@ -176,10 +168,6 @@ const appointmentService = {
       }
     }
 
-<<<<<<< HEAD
-    // try to populate doctor_name and specialty from doctors collection
-=======
->>>>>>> 2b2ec0a (feat: add patient profile page with edit and image upload, improve appointment availability management)
     const doc = await db.getById('doctors', data.doctor);
     const doctor_name = doc ? `${(doc as any).first_name} ${(doc as any).last_name}` : '';
     const specialty = doc ? (doc as any).specialty : '';
@@ -210,17 +198,26 @@ const appointmentService = {
       if (doctor) {
         const weekday = getWeekdayFromDate((appt as any).date);
         const availability: AvailabilityBlock[] = (doctor as any).availability ?? [];
-        const updatedAvailability = restoreAvailabilityForCancellation(availability, weekday, (appt as any).time);
+        const updatedAvailability = restoreAvailabilityForCancellation(
+          availability,
+          weekday,
+          (appt as any).time,
+        );
 
         // Clean up bookedSlots
         const bookedSlots: Record<string, string[]> = (doctor as any).bookedSlots ?? {};
         const dateKey = (appt as any).date;
         if (bookedSlots[dateKey]) {
-          bookedSlots[dateKey] = bookedSlots[dateKey].filter((t: string) => t !== (appt as any).time);
+          bookedSlots[dateKey] = bookedSlots[dateKey].filter(
+            (t: string) => t !== (appt as any).time,
+          );
           if (bookedSlots[dateKey].length === 0) delete bookedSlots[dateKey];
         }
 
-        await db.update('doctors', (appt as any).doctor, { availability: updatedAvailability, bookedSlots });
+        await db.update('doctors', (appt as any).doctor, {
+          availability: updatedAvailability,
+          bookedSlots,
+        });
       }
     }
 
@@ -228,25 +225,10 @@ const appointmentService = {
   },
 
   confirm: async (id: number) => {
-<<<<<<< HEAD
-    // Mark appointment as confirmed + paid
-    const updated = await db.update<Appointment>('appointments', id, { status: 'confirmed', paid: true });
-
-    // Also persist the booked slot onto the doctor record so the slot is
-    // reflected as unavailable even without scanning all appointments.
-    if (updated) {
-      const appt = updated as any;
-      const doctor = await db.getById('doctors', appt.doctor);
-      if (doctor) {
-        const bookedSlots: Record<string, string[]> = (doctor as any).bookedSlots ?? {};
-        const dateKey = appt.date as string;
-        const existing: string[] = bookedSlots[dateKey] ?? [];
-        if (appt.time && !existing.includes(appt.time)) {
-          bookedSlots[dateKey] = [...existing, appt.time];
-        }
-        await db.update('doctors', appt.doctor, { bookedSlots });
-=======
-    const updated = await db.update<Appointment>('appointments', id, { status: 'confirmed', paid: true });
+    const updated = await db.update<Appointment>('appointments', id, {
+      status: 'confirmed',
+      paid: true,
+    });
 
     if (updated) {
       const appt = updated as any;
@@ -254,11 +236,9 @@ const appointmentService = {
       if (doctor && appt.time) {
         const weekday = getWeekdayFromDate(appt.date);
 
-        // 1. Update availability array — narrow/split the booked block
         const availability: AvailabilityBlock[] = (doctor as any).availability ?? [];
         const updatedAvailability = updateAvailabilityForBooking(availability, weekday, appt.time);
 
-        // 2. Track with bookedSlots for date-specific checks
         const bookedSlots: Record<string, string[]> = (doctor as any).bookedSlots ?? {};
         const dateKey = appt.date as string;
         const existing: string[] = bookedSlots[dateKey] ?? [];
@@ -267,7 +247,6 @@ const appointmentService = {
         }
 
         await db.update('doctors', appt.doctor, { availability: updatedAvailability, bookedSlots });
->>>>>>> 2b2ec0a (feat: add patient profile page with edit and image upload, improve appointment availability management)
       }
     }
 
@@ -286,16 +265,25 @@ const appointmentService = {
       if (doctor) {
         const weekday = getWeekdayFromDate((appt as any).date);
         const availability: AvailabilityBlock[] = (doctor as any).availability ?? [];
-        const updatedAvailability = restoreAvailabilityForCancellation(availability, weekday, (appt as any).time);
+        const updatedAvailability = restoreAvailabilityForCancellation(
+          availability,
+          weekday,
+          (appt as any).time,
+        );
 
         const bookedSlots: Record<string, string[]> = (doctor as any).bookedSlots ?? {};
         const dateKey = (appt as any).date;
         if (bookedSlots[dateKey]) {
-          bookedSlots[dateKey] = bookedSlots[dateKey].filter((t: string) => t !== (appt as any).time);
+          bookedSlots[dateKey] = bookedSlots[dateKey].filter(
+            (t: string) => t !== (appt as any).time,
+          );
           if (bookedSlots[dateKey].length === 0) delete bookedSlots[dateKey];
         }
 
-        await db.update('doctors', (appt as any).doctor, { availability: updatedAvailability, bookedSlots });
+        await db.update('doctors', (appt as any).doctor, {
+          availability: updatedAvailability,
+          bookedSlots,
+        });
       }
     }
 

@@ -6,7 +6,7 @@ interface User extends Storable {
   password: string;
   first_name: string;
   last_name: string;
-  role: 'patient' | 'doctor';
+  role: 'patient' | 'doctor' | 'admin';
   phone?: string;
   avatar?: string;
 }
@@ -69,6 +69,20 @@ const authService = {
       last_name: rest.last_name,
       role: rest.role,
     });
+
+    if (rest.role === 'doctor') {
+      await db.create('doctors', {
+        first_name: rest.first_name,
+        last_name: rest.last_name,
+        specialty: '',
+        bio: '',
+        contact: rest.email,
+        availability: [],
+        bookedSlots: {},
+        session_price: 0,
+      });
+    }
+
     const safeUser = omitPassword(newUser);
     localStorage.setItem('user', JSON.stringify(safeUser));
     return { message: 'Registration successful', user: safeUser };

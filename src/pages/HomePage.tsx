@@ -2,12 +2,26 @@ import { useEffect, useState } from 'react';
 import { Box, Typography, TextField, Button, MenuItem, Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import doctorService from '../services/doctor.service';
+import { useAppSelector } from '../store';
+import { selectUser } from '../store/authSlice';
 
 function HomePage() {
   const navigate = useNavigate();
+  const user = useAppSelector(selectUser);
   const [name, setName] = useState('');
   const [specialty, setSpecialty] = useState('');
   const [specialties, setSpecialties] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (user?.role === 'doctor') {
+      navigate('/doctor/dashboard', { replace: true });
+      return;
+    }
+    if (user?.role === 'admin') {
+      navigate('/admin/dashboard', { replace: true });
+      return;
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     (async () => {
@@ -16,6 +30,10 @@ function HomePage() {
       setSpecialties(uniq);
     })();
   }, []);
+
+  if (user?.role === 'doctor' || user?.role === 'admin') {
+    return null;
+  }
 
   const handleSearch = () => {
     const params = new URLSearchParams();

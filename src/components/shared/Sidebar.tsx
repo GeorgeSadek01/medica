@@ -21,24 +21,24 @@ import { selectUser } from '../../store/authSlice';
 const DRAWER_WIDTH = 240;
 
 const patientLinks = [
-  { label: 'Dashboard',    path: '/patient/dashboard',    icon: <DashboardIcon /> },
-  { label: 'Find Doctors', path: '/patient/doctors',      icon: <LocalHospitalIcon /> },
-  { label: 'Appointments', path: '/patient/appointments', icon: <CalendarMonthIcon /> },
-  { label: 'My Profile',   path: '/profile',              icon: <PersonIcon /> },
+  { label: 'Dashboard', path: '/dashboard/patient', icon: <DashboardIcon /> },
+  { label: 'Find Doctors', path: '/', icon: <LocalHospitalIcon /> },
+  { label: 'Appointments', path: '/dashboard/patient', icon: <CalendarMonthIcon /> },
+  { label: 'My Profile', path: '/profile/patient', icon: <PersonIcon /> },
 ];
 
 const doctorLinks = [
-  { label: 'Dashboard',    path: '/doctor/dashboard',    icon: <DashboardIcon /> },
+  { label: 'Dashboard', path: '/doctor/dashboard', icon: <DashboardIcon /> },
   { label: 'Appointments', path: '/doctor/appointments', icon: <CalendarMonthIcon /> },
   { label: 'Availability', path: '/doctor/availability', icon: <EventAvailableIcon /> },
-  { label: 'My Profile',   path: 'doctor/profile',             icon: <PersonIcon /> },
+  { label: 'My Profile', path: '/doctor/profile', icon: <PersonIcon /> },
 ];
 
 const adminLinks = [
-  { label: 'Dashboard',    path: '/admin/dashboard',    icon: <DashboardIcon /> },
-  { label: 'Users',        path: '/admin/users',        icon: <PeopleIcon /> },
+  { label: 'Dashboard', path: '/admin/dashboard', icon: <DashboardIcon /> },
+  { label: 'Users', path: '/admin/users', icon: <PeopleIcon /> },
   { label: 'Appointments', path: '/admin/appointments', icon: <CalendarMonthIcon /> },
-  { label: 'Specialties',  path: '/admin/specialties',  icon: <MedicalServicesIcon /> },
+  { label: 'Specialties', path: '/admin/specialties', icon: <MedicalServicesIcon /> },
 ];
 
 interface SidebarProps {
@@ -54,12 +54,7 @@ const Sidebar = ({ open, onClose, variant = 'temporary' }: SidebarProps) => {
 
   const role = user?.role as string;
 
-  const links =
-    role === 'admin'
-      ? adminLinks
-      : role === 'doctor'
-      ? doctorLinks
-      : patientLinks;
+  const links = role === 'admin' ? adminLinks : role === 'doctor' ? doctorLinks : patientLinks;
 
   const handleNavigate = (path: string) => {
     navigate(path);
@@ -73,10 +68,7 @@ const Sidebar = ({ open, onClose, variant = 'temporary' }: SidebarProps) => {
           Medica
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          {user?.role
-            ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
-            : ''}{' '}
-          Panel
+          {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ''} Panel
         </Typography>
       </Box>
 
@@ -101,11 +93,11 @@ const Sidebar = ({ open, onClose, variant = 'temporary' }: SidebarProps) => {
                 }}
               >
                 <ListItemIcon sx={{ minWidth: 36 }}>{link.icon}</ListItemIcon>
-               
+
                 <ListItemText
-                     primary={link.label}
-                      slotProps={{ primary: { sx: { fontSize: 14 } } }}
-                       />
+                  primary={link.label}
+                  slotProps={{ primary: { sx: { fontSize: 14 } } }}
+                />
               </ListItemButton>
             </ListItem>
           );

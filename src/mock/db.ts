@@ -63,6 +63,15 @@ function seed(): void {
     phone: '',
     avatar: '',
   });
+  doctorUsers.push({
+    id: doctorUsers.length + 1,
+    email: 'admin@medica.com',
+    password: 'password123',
+    first_name: 'Admin',
+    last_name: 'User',
+    role: 'admin',
+    phone: '',
+  });
   localStorage.setItem(`${DB_PREFIX}users`, JSON.stringify(doctorUsers));
 
   const specialties = [...new Set(seedDoctors.map((d) => d.specialty))].map((name, i) => ({
@@ -99,16 +108,16 @@ export const db = {
     const newItem = { ...data, id: nextId(collection) } as T;
     collection.push(newItem);
     saveCollection(name, collection);
-    
+
     if (name === 'appointments') {
       try {
         await fetch('/api/appointments', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newItem)
+          body: JSON.stringify(newItem),
         });
       } catch (e) {
-        console.error("Failed to save to appointments.json", e);
+        console.error('Failed to save to appointments.json', e);
       }
     }
     return newItem;
@@ -125,16 +134,16 @@ export const db = {
     if (index === -1) return null;
     collection[index] = { ...collection[index], ...data };
     saveCollection(name, collection);
-    
+
     if (name === 'appointments') {
       try {
         await fetch(`/api/appointments/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
+          body: JSON.stringify(data),
         });
       } catch (e) {
-        console.error("Failed to update appointments.json", e);
+        console.error('Failed to update appointments.json', e);
       }
     }
     return collection[index];
