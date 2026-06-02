@@ -78,7 +78,8 @@ export default function AdminAppointments() {
   useEffect(() => {
     (async () => {
       try {
-        const all = await adminService.getAllAppointments().catch(() => []);
+        const response = await adminService.getAllAppointments().catch(() => ({ results: [] }));
+        const all = Array.isArray(response) ? response : (response.results ?? []);
         setAppointments(all as Appointment[]);
       } finally {
         setLoading(false);
