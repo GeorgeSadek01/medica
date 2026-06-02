@@ -49,6 +49,7 @@ export default function DoctorAvailabilityPage() {
   const navigate = useNavigate();
 
   const [doctorId, setDoctorId] = useState<number | null>(null);
+  const [sessionPrice, setSessionPrice] = useState(0);
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
   const [newSlot, setNewSlot] = useState({ day: 'Monday', start_time: '09:00', end_time: '17:00' });
   const [docStatus, setDocStatus] = useState<'none' | 'pending' | 'rejected' | 'approved'>('none');
@@ -80,6 +81,7 @@ export default function DoctorAvailabilityPage() {
         );
         if (currentDoctor) {
           setDoctorId(currentDoctor.id);
+          setSessionPrice(currentDoctor.session_price ?? 0);
           setSlots(currentDoctor.availability || []);
         }
 
@@ -112,6 +114,14 @@ export default function DoctorAvailabilityPage() {
 
   // add new slot
   const handleAddSlot = async () => {
+    if (sessionPrice <= 0) {
+      setAlertMessage({
+        type: 'error',
+        text: 'Please set your session price in your profile before adding availability schedules.',
+      });
+      return;
+    }
+
     if (newSlot.start_time >= newSlot.end_time) {
       setAlertMessage({
         type: 'error',

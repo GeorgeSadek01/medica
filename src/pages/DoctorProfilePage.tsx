@@ -27,6 +27,7 @@ interface ProfileFormData {
   specialty: string;
   bio: string;
   contact: string;
+  session_price: number;
 }
 
 export default function DoctorProfilePage() {
@@ -40,6 +41,7 @@ export default function DoctorProfilePage() {
     specialty: '',
     bio: '',
     contact: '',
+    session_price: 0,
   });
 
   const [loading, setLoading] = useState(true);
@@ -83,6 +85,7 @@ export default function DoctorProfilePage() {
             specialty: docSpecialty,
             bio: currentDoctor.bio || '',
             contact: currentDoctor.contact,
+            session_price: currentDoctor.session_price ?? 0,
           });
           if (docSpecialty && !specNames.includes(docSpecialty)) {
             setSpecialtiesList((prev) => [...prev, docSpecialty].sort());
@@ -94,6 +97,7 @@ export default function DoctorProfilePage() {
             specialty: 'General Medicine',
             bio: '',
             contact: user.email || '',
+            session_price: 0,
           });
         }
 
@@ -172,6 +176,7 @@ export default function DoctorProfilePage() {
           specialty: formData.specialty,
           bio: formData.bio,
           contact: formData.contact,
+          session_price: formData.session_price,
         });
 
         if (formData.specialty && !specialtiesList.includes(formData.specialty)) {
@@ -308,6 +313,26 @@ export default function DoctorProfilePage() {
                 ),
               },
             }}
+          />
+
+          <TextField
+            label="Session Price (EGP)"
+            name="session_price"
+            type="number"
+            value={formData.session_price}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, session_price: Math.max(0, Number(e.target.value)) }))
+            }
+            fullWidth
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">EGP</InputAdornment>
+                ),
+              },
+              htmlInput: { min: 0 },
+            }}
+            helperText="Set your consultation fee per session"
           />
 
           <TextField
