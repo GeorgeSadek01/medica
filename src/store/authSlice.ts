@@ -47,7 +47,7 @@ export const registerUser = createAsyncThunk(
       password: string;
       first_name: string;
       last_name: string;
-      role: 'patient' | 'doctor' | 'admin';
+      role: 'patient' | 'doctor';
       specialty?: string;
     },
     { rejectWithValue },

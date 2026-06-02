@@ -65,7 +65,7 @@ export default function DoctorProfilePage() {
         setSpecialtiesList(specNames);
 
         const currentDoctor = allDoctors.find(
-          (d) =>
+          (d: any) =>
             d.contact === user?.email ||
             `${d.first_name} ${d.last_name}` === `${user?.first_name} ${user?.last_name}`,
         );

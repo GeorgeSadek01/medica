@@ -67,7 +67,7 @@ export default function DoctorAppointmentsPage() {
       setLoading(true);
       const allApps = await appointmentService.getAll().catch(() => []);
       const allDoctors = await doctorService.getAll().catch(() => []);
-      const currentDoc = allDoctors.find((d) => d.contact === user?.email);
+      const currentDoc = allDoctors.find((d: any) => d.contact === user?.email);
 
       if (currentDoc) {
         setAppointments(
@@ -258,7 +258,7 @@ export default function DoctorAppointmentsPage() {
           <ListItemIcon>
             <CloseIcon fontSize="small" color="error" />
           </ListItemIcon>
-          <ListItemText primary="Reject & Cancel" primaryTypographyProps={{ fontWeight: '500' }} />
+          <ListItemText primary="Reject & Cancel" slotProps={{ primary: { sx: { fontWeight: '500' } } }} />
         </MenuItem>
 
         <MenuItem onClick={handleSelectAddNotes} sx={{ color: 'info.main' }}>
@@ -267,7 +267,7 @@ export default function DoctorAppointmentsPage() {
           </ListItemIcon>
           <ListItemText
             primary="Add Notes / Diagnosis"
-            primaryTypographyProps={{ fontWeight: '500' }}
+            slotProps={{ primary: { sx: { fontWeight: '500' } } }}
           />
         </MenuItem>
       </Menu>

@@ -276,8 +276,7 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
                   setDate(minDate);
                 }
               }}
-              slotProps={{ inputLabel: { shrink: true } }}
-              inputProps={{ min: minDate }}
+              slotProps={{ inputLabel: { shrink: true }, htmlInput: { min: minDate } }}
             />
           </Box>
 

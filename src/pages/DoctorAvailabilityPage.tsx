@@ -69,7 +69,7 @@ export default function DoctorAvailabilityPage() {
         setLoading(true);
         const allDoctors = await doctorService.getAll().catch(() => []);
         const currentDoctor = allDoctors.find(
-          (d) =>
+          (d: any) =>
             d.contact === user?.email ||
             `${d.first_name} ${d.last_name}` === `${user?.first_name} ${user?.last_name}`,
         );
@@ -206,7 +206,7 @@ export default function DoctorAvailabilityPage() {
       )}
 
       <Grid container spacing={4}>
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <Paper elevation={2} sx={{ p: 4, borderRadius: 3 }}>
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3 }}>
               Add New Working Window
@@ -266,7 +266,7 @@ export default function DoctorAvailabilityPage() {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={7}>
+        <Grid size={{ xs: 12, md: 7 }}>
           <Paper elevation={2} sx={{ p: 4, borderRadius: 3 }}>
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
               Weekly Active Schedule ({slots.length})
@@ -301,7 +301,7 @@ export default function DoctorAvailabilityPage() {
                     >
                       <ListItemText
                         primary={slot.day}
-                        primaryTypographyProps={{ fontWeight: 'bold', color: 'primary.main' }}
+                        slotProps={{ primary: { sx: { fontWeight: 'bold', color: 'primary.main' } } }}
                         secondary={
                           <Box
                             component="span"

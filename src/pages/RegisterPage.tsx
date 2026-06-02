@@ -20,7 +20,7 @@ import { ValidationError } from 'yup';
 import { registerSchema } from '../validations';
 import { useAppDispatch, useAppSelector } from '../store';
 import { registerUser, clearError, selectAuth } from '../store/authSlice';
-import { db } from '../mock/db';
+import api from '../services/api';
 import type { RegisterFormData } from '../validations';
 
 function RegisterPage() {
@@ -45,8 +45,12 @@ function RegisterPage() {
 
   useEffect(() => {
     (async () => {
-      const items = await db.getAll<{ id: number; name: string }>('specialties');
-      setSpecialties(items.map((s) => s.name).sort());
+      try {
+        const res = await api.get('/specialties/');
+        setSpecialties((res.data as { id: number; name: string }[]).map((s) => s.name).sort());
+      } catch {
+        // fallback if specialties endpoint is unavailable
+      }
     })();
   }, []);
 

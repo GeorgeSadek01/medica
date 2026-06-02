@@ -1,12 +1,14 @@
-import { db } from '../mock/db';
+import api from './api';
 
 const patientService = {
   getProfile: async (id: number) => {
-    return db.getById('users', id);
+    const res = await api.get(`/users/${id}/`);
+    return res.data;
   },
 
   updateProfile: async (id: number, data: Record<string, unknown>) => {
-    return db.update('users', id, data);
+    const res = await api.patch(`/users/${id}/`, data);
+    return res.data;
   },
 };
 

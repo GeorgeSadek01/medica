@@ -195,7 +195,7 @@ function HomePage() {
   useEffect(() => {
     (async () => {
       const doctors = await doctorService.getAll();
-      const uniq = Array.from(new Set(doctors.map((d) => d.specialty))).sort();
+      const uniq = Array.from(new Set(doctors.map((d: any) => d.specialty))).sort() as string[];
       setSpecialties(uniq);
     })();
   }, []);

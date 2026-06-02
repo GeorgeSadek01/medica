@@ -55,7 +55,7 @@ function PatientDashboard() {
 
       <Grid container spacing={3} sx={{ mt: 1 }}>
         {stats.map((s) => (
-          <Grid item xs={12} sm={6} md={4} lg={2.4} key={s.label}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }} key={s.label}>
             <Paper
               sx={{
                 p: 2.5,

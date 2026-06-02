@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -14,7 +14,6 @@ import {
   TableHead,
   TableRow,
   Chip,
-  Button,
 } from '@mui/material';
 
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -56,7 +55,7 @@ export default function DoctorDashboardPage() {
       const allDoctors = await doctorService.getAll().catch(() => []);
 
       const currentDoctor = allDoctors.find(
-        (d) =>
+        (d: any) =>
           d.contact === user?.email ||
           `${d.first_name} ${d.last_name}` === `${user?.first_name} ${user?.last_name}`,
       );
@@ -64,7 +63,7 @@ export default function DoctorDashboardPage() {
       if (currentDoctor) {
         setDoctorName(`Dr. ${currentDoctor.first_name} ${currentDoctor.last_name}`);
         const doctorAppointments = allAppointments.filter(
-          (app) => Number(app.doctor) === Number(currentDoctor.id),
+          (app: any) => Number(app.doctor) === Number(currentDoctor.id),
         );
         setAppointments(doctorAppointments);
       } else {
@@ -159,7 +158,7 @@ export default function DoctorDashboardPage() {
       </Box>
 
       <Grid container spacing={3} sx={{ mb: 5 }}>
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card elevation={2} sx={{ borderLeft: '6px solid #1976d2', borderRadius: 4 }}>
             <CardContent
               sx={{
@@ -186,7 +185,7 @@ export default function DoctorDashboardPage() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card elevation={2} sx={{ borderLeft: '6px solid #2e7d32', borderRadius: 4 }}>
             <CardContent
               sx={{
@@ -213,7 +212,7 @@ export default function DoctorDashboardPage() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card elevation={2} sx={{ borderLeft: '6px solid #d32f2f', borderRadius: 4 }}>
             <CardContent
               sx={{
@@ -242,7 +241,7 @@ export default function DoctorDashboardPage() {
       </Grid>
 
       <Grid container spacing={4}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Paper elevation={2} sx={{ p: 3, borderRadius: 4 }}>
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: 'primary.main' }}>
               Active & Confirmed Schedule
@@ -295,7 +294,7 @@ export default function DoctorDashboardPage() {
           </Paper>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Paper elevation={2} sx={{ p: 3, borderRadius: 4 }}>
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: 'text.secondary' }}>
               Past & Cancelled History

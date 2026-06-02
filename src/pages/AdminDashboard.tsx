@@ -43,7 +43,7 @@ export default function AdminDashboard() {
       </Typography>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card elevation={2} sx={{ borderLeft: '6px solid #1976d2', borderRadius: 4 }}>
             <CardContent
               sx={{
@@ -70,7 +70,7 @@ export default function AdminDashboard() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card elevation={2} sx={{ borderLeft: '6px solid #2e7d32', borderRadius: 4 }}>
             <CardContent
               sx={{
@@ -97,7 +97,7 @@ export default function AdminDashboard() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card elevation={2} sx={{ borderLeft: '6px solid #9c27b0', borderRadius: 4 }}>
             <CardContent
               sx={{

@@ -1,81 +1,101 @@
-import { db } from '../mock/db';
+import api from './api';
 
 const adminService = {
-  getAllUsers: async () => {
-    return db.getAll('users');
+  getAllUsers: async (params?: Record<string, string>) => {
+    const res = await api.get('/users/', { params });
+    return res.data;
   },
 
   getUserById: async (id: number) => {
-    return db.getById('users', id);
+    const res = await api.get(`/users/${id}/`);
+    return res.data;
   },
 
   toggleUserStatus: async (id: number, isActive: boolean) => {
-    await db.update('users', id, { is_active: isActive });
-    return { id, is_active: isActive };
+    const res = await api.patch(`/users/${id}/`, { is_active: isActive });
+    return res.data;
   },
 
   softDeleteUser: async (id: number) => {
-    await db.update('users', id, { is_active: false, deleted_at: new Date().toISOString() });
-    return { id, is_active: false, deleted_at: new Date().toISOString() };
+    const res = await api.delete(`/users/${id}/`, { data: { soft: true } });
+    return res.data;
+  },
+
+  restoreUser: async (id: number) => {
+    const res = await api.post(`/users/${id}/restore/`);
+    return res.data;
   },
 
   makeAdmin: async (id: number) => {
-    await db.update('users', id, { role: 'admin' });
-    return { id, role: 'admin' };
+    const res = await api.patch(`/users/${id}/`, { role: 'admin' });
+    return res.data;
   },
 
   getSpecialties: async () => {
-    return db.getAll('specialties');
+    const res = await api.get('/specialties/');
+    return res.data;
   },
 
   createSpecialty: async (name: string) => {
-    return db.create('specialties', { name });
+    const res = await api.post('/specialties/', { name });
+    return res.data;
   },
 
   editSpecialty: async (id: number, name: string) => {
-    await db.update('specialties', id, { name });
-    return { id, name };
+    const res = await api.patch(`/specialties/${id}/`, { name });
+    return res.data;
   },
 
   deleteSpecialty: async (id: number) => {
-    await db.delete('specialties', id);
-    return { deleted: true, id };
+    const res = await api.delete(`/specialties/${id}/`);
+    return res.data;
   },
 
-  getAllAppointments: async () => {
-    return db.getAll('appointments');
+  getAllAppointments: async (params?: Record<string, string>) => {
+    const res = await api.get('/appointments/', { params });
+    return res.data;
   },
 
   getAppointmentsByUser: async (userId: number, asDoctor = false) => {
-    const all = await db.getAll('appointments');
-    return all.filter((a: any) =>
-      asDoctor ? a.doctor === userId : a.patient === userId,
-    );
+    const params: Record<string, string> = {};
+    if (asDoctor) {
+      params.doctor = String(userId);
+    } else {
+      params.patient = String(userId);
+    }
+    const res = await api.get('/appointments/', { params });
+    return res.data;
   },
 
   getDoctors: async () => {
-    const all = await db.getAll('users');
-    return all.filter((u: any) => u.role === 'doctor' && u.is_active !== false);
+    const res = await api.get('/users/', {
+      params: { role: 'doctor', is_active: 'true' },
+    });
+    return res.data;
   },
 
   getPatients: async () => {
-    const all = await db.getAll('users');
-    return all.filter((u: any) => u.role === 'patient' && u.is_active !== false);
+    const res = await api.get('/users/', {
+      params: { role: 'patient', is_active: 'true' },
+    });
+    return res.data;
   },
 
   verifyDoctor: async (id: number, verified: boolean) => {
-    await db.update('users', id, { verified });
-    return { id, verified };
+    const res = await api.patch(`/users/${id}/`, { verified });
+    return res.data;
   },
 
   getUnverifiedDoctors: async () => {
-    const all = await db.getAll('users');
-    return all.filter((u: any) => u.role === 'doctor' && u.verified !== true);
+    const res = await api.get('/users/', {
+      params: { role: 'doctor', verified: 'false' },
+    });
+    return res.data;
   },
 
   getUnverifiedDoctorsCount: async () => {
-    const all = await db.getAll('users');
-    return all.filter((u: any) => u.role === 'doctor' && u.verified !== true).length;
+    const doctors = await adminService.getUnverifiedDoctors();
+    return doctors.length;
   },
 };
 
