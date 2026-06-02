@@ -24,7 +24,8 @@ import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import DescriptionIcon from '@mui/icons-material/Description';
 import GppMaybeIcon from '@mui/icons-material/GppMaybe';
 
-import appointmentService from '../services/appointment.service';
+import adminService from '../services/admin.service';
+import doctorService from '../services/doctor.service';
 import { useAppDispatch, useAppSelector } from '../store';
 import { logout, selectAuth } from '../store/authSlice';
 
@@ -92,7 +93,9 @@ function ReuploadForm({ onCancel, onDone }: { onCancel: () => void; onDone: () =
 
 export default function DoctorDashboardPage() {
   const { user } = useAppSelector(selectAuth);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [confirmedAppointments, setConfirmedAppointments] = useState<Appointment[]>([]);
+  const [cancelledAppointments, setCancelledAppointments] = useState<Appointment[]>([]);
+  const [stats, setStats] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [doctorName, setDoctorName] = useState('Doctor');
   const [docStatus, setDocStatus] = useState<'none' | 'pending' | 'rejected' | 'approved'>('none');
@@ -102,24 +105,11 @@ export default function DoctorDashboardPage() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const allAppointments = await appointmentService.getAll().catch(() => []);
-      const allDoctors = await doctorService.getAll().catch(() => []);
-
-      const currentDoctor = allDoctors.find(
-        (d: any) =>
-          d.contact === user?.email ||
-          `${d.first_name} ${d.last_name}` === `${user?.first_name} ${user?.last_name}`,
-      );
-
-      if (currentDoctor) {
-        setDoctorName(`Dr. ${currentDoctor.first_name} ${currentDoctor.last_name}`);
-        const doctorAppointments = allAppointments.filter(
-          (app: any) => Number(app.doctor) === Number(currentDoctor.id),
-        );
-        setAppointments(doctorAppointments);
-      } else {
-        setAppointments(allAppointments);
-      }
+      const data = await doctorService.getDashboardData();
+      setStats(data.statistics || {});
+      setConfirmedAppointments(data.confirmed_appointments || []);
+      setCancelledAppointments(data.cancelled_appointments || []);
+      setDoctorName(`Dr. ${user?.first_name} ${user?.last_name}`);
 
       if (user?.role === 'doctor' && !user.verified) {
         try {
@@ -147,14 +137,9 @@ export default function DoctorDashboardPage() {
   }, [user]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const totalBookings = appointments.length;
-  const confirmedAppointments = appointments.filter(
-    (a) => a.status === 'confirmed' || a.status === 'completed',
-  );
-  const cancelledAppointments = appointments.filter((a) => a.status === 'cancelled');
-
-  const confirmedCount = confirmedAppointments.length;
-  const cancelledCount = cancelledAppointments.length;
+  const totalBookings = stats.total_appointments ?? 0;
+  const confirmedCount = stats.confirmed_and_completed_count ?? 0;
+  const cancelledCount = stats.cancelled_count ?? 0;
 
   const getStatusChip = (status: string) => {
     const configs: Record<

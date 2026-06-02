@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -32,6 +33,7 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import GppMaybeIcon from '@mui/icons-material/GppMaybe';
 
+import adminService from '../services/admin.service';
 import appointmentService from '../services/appointment.service';
 import doctorService from '../services/doctor.service';
 import { useAppSelector } from '../store';
@@ -67,9 +69,12 @@ function isTerminal(status: string) {
 
 export default function DoctorAppointmentsPage() {
   const user = useAppSelector(selectUser);
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [docStatus, setDocStatus] = useState<'none' | 'pending' | 'rejected' | 'approved'>('none');
+  const [rejectionReason, setRejectionReason] = useState('');
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [activeApp, setActiveApp] = useState<Appointment | null>(null);
@@ -92,6 +97,19 @@ export default function DoctorAppointmentsPage() {
         );
       } else {
         setAppointments(allApps as Appointment[]);
+      }
+
+      if (user?.role === 'doctor' && !user.verified) {
+        try {
+          const docs = await adminService.getDocuments();
+          const myDoc = (docs as any[]).find((d: any) => d.doctor_id === user.id);
+          if (myDoc) {
+            setDocStatus(myDoc.status);
+            setRejectionReason(myDoc.rejection_reason || '');
+          }
+        } catch {
+          // ignore
+        }
       }
     } catch {
       setAlert({ type: 'error', text: 'Failed to load appointments.' });
@@ -270,13 +288,29 @@ export default function DoctorAppointmentsPage() {
 
       {user && user.role === 'doctor' && !user.verified ? (
         <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 4, maxWidth: 480, mx: 'auto', mt: 4 }}>
-          <GppMaybeIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
+          <GppMaybeIcon sx={{ fontSize: 64, color: docStatus === 'rejected' ? 'error.main' : 'warning.main', mb: 2 }} />
           <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
-            Account Pending Verification
+            {docStatus === 'rejected' ? 'Account Verification Rejected' : 'Account Pending Verification'}
           </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Your account is awaiting admin approval. You cannot manage appointments until verified.
-          </Typography>
+          {docStatus === 'rejected' ? (
+            <>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                Your submitted documents did not meet the verification requirements.
+              </Typography>
+              {rejectionReason && (
+                <Typography variant="body2" color="error" sx={{ mb: 1, fontWeight: 600 }}>
+                  Reason: {rejectionReason}
+                </Typography>
+              )}
+              <Button variant="contained" onClick={() => navigate('/doctor/dashboard')} sx={{ mt: 1 }}>
+                Go to Dashboard to Re-upload
+              </Button>
+            </>
+          ) : (
+            <Typography variant="body1" color="text.secondary">
+              Your account is awaiting admin approval. You cannot manage appointments until verified.
+            </Typography>
+          )}
         </Paper>
       ) : loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>

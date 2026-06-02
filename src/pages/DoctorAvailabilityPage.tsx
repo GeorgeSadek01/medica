@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -29,6 +30,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import GppMaybeIcon from '@mui/icons-material/GppMaybe';
 
+import adminService from '../services/admin.service';
 import doctorService from '../services/doctor.service';
 import { useAppSelector } from '../store';
 import { selectAuth } from '../store/authSlice';
@@ -44,10 +46,13 @@ interface AvailabilitySlot {
 
 export default function DoctorAvailabilityPage() {
   const { user, loading: authLoading } = useAppSelector(selectAuth);
+  const navigate = useNavigate();
 
   const [doctorId, setDoctorId] = useState<number | null>(null);
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
   const [newSlot, setNewSlot] = useState({ day: 'Monday', start_time: '09:00', end_time: '17:00' });
+  const [docStatus, setDocStatus] = useState<'none' | 'pending' | 'rejected' | 'approved'>('none');
+  const [rejectionReason, setRejectionReason] = useState('');
 
   const [editingSlot, setEditingSlot] = useState<AvailabilitySlot | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -76,6 +81,19 @@ export default function DoctorAvailabilityPage() {
         if (currentDoctor) {
           setDoctorId(currentDoctor.id);
           setSlots(currentDoctor.availability || []);
+        }
+
+        if (user?.role === 'doctor' && !user.verified) {
+          try {
+            const docs = await adminService.getDocuments();
+            const myDoc = (docs as any[]).find((d: any) => d.doctor_id === user.id);
+            if (myDoc) {
+              setDocStatus(myDoc.status);
+              setRejectionReason(myDoc.rejection_reason || '');
+            }
+          } catch {
+            // ignore
+          }
         }
       } catch (error) {
         console.error('Error initializing doctor availability:', error);
@@ -174,16 +192,33 @@ export default function DoctorAvailabilityPage() {
   }
 
   if (user && user.role === 'doctor' && !user.verified) {
+    const isRejected = docStatus === 'rejected';
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
         <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 4, maxWidth: 480 }}>
-          <GppMaybeIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
+          <GppMaybeIcon sx={{ fontSize: 64, color: isRejected ? 'error.main' : 'warning.main', mb: 2 }} />
           <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
-            Account Pending Verification
+            {isRejected ? 'Account Verification Rejected' : 'Account Pending Verification'}
           </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Your account is awaiting admin approval. You cannot manage availability until verified.
-          </Typography>
+          {isRejected ? (
+            <>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                Your submitted documents did not meet the verification requirements.
+              </Typography>
+              {rejectionReason && (
+                <Typography variant="body2" color="error" sx={{ mb: 1, fontWeight: 600 }}>
+                  Reason: {rejectionReason}
+                </Typography>
+              )}
+              <Button variant="contained" onClick={() => navigate('/doctor/dashboard')} sx={{ mt: 1 }}>
+                Go to Dashboard to Re-upload
+              </Button>
+            </>
+          ) : (
+            <Typography variant="body1" color="text.secondary">
+              Your account is awaiting admin approval. You cannot manage availability until verified.
+            </Typography>
+          )}
         </Paper>
       </Box>
     );

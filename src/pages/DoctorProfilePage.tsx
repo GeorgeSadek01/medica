@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -30,6 +31,7 @@ interface ProfileFormData {
 
 export default function DoctorProfilePage() {
   const { user, loading: authLoading } = useAppSelector(selectAuth);
+  const navigate = useNavigate();
 
   const [doctorId, setDoctorId] = useState<number | null>(null);
   const [formData, setFormData] = useState<ProfileFormData>({
@@ -43,6 +45,8 @@ export default function DoctorProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [specialtiesList, setSpecialtiesList] = useState<string[]>([]);
+  const [docStatus, setDocStatus] = useState<'none' | 'pending' | 'rejected' | 'approved'>('none');
+  const [rejectionReason, setRejectionReason] = useState('');
 
   // Validation
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -91,6 +95,19 @@ export default function DoctorProfilePage() {
             bio: '',
             contact: user.email || '',
           });
+        }
+
+        if (user?.role === 'doctor' && !user.verified) {
+          try {
+            const docs = await adminService.getDocuments();
+            const myDoc = (docs as any[]).find((d: any) => d.doctor_id === user.id);
+            if (myDoc) {
+              setDocStatus(myDoc.status);
+              setRejectionReason(myDoc.rejection_reason || '');
+            }
+          } catch {
+            // ignore
+          }
         }
       } catch (error) {
         console.error('Error initializing doctor profile:', error);
@@ -184,16 +201,35 @@ export default function DoctorProfilePage() {
   }
 
   if (user && user.role === 'doctor' && !user.verified) {
+    const isRejected = docStatus === 'rejected';
     return (
       <Box sx={{ position: 'fixed', top: '64px', left: 0, right: 0, bottom: 0, zIndex: 1250, display: 'flex', justifyContent: 'center', alignItems: 'center', bgcolor: 'background.default' }}>
         <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 4, maxWidth: 480 }}>
-          <GppMaybeIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
+          <GppMaybeIcon sx={{ fontSize: 64, color: isRejected ? 'error.main' : 'warning.main', mb: 2 }} />
           <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
-            Account Pending Verification
+            {isRejected ? 'Account Verification Rejected' : 'Account Pending Verification'}
           </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Your account is awaiting admin approval. Profile editing is unavailable until you are verified.
-          </Typography>
+          {isRejected ? (
+            <>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                Your submitted documents did not meet the verification requirements.
+              </Typography>
+              {rejectionReason && (
+                <Typography variant="body2" color="error" sx={{ mb: 1, fontWeight: 600 }}>
+                  Reason: {rejectionReason}
+                </Typography>
+              )}
+              <Button variant="contained" onClick={() => navigate('/doctor/dashboard')} sx={{ mt: 1 }}>
+                Go to Dashboard to Re-upload
+              </Button>
+            </>
+          ) : (
+            <>
+              <Typography variant="body1" color="text.secondary">
+                Your account is awaiting admin approval. Profile editing is unavailable until you are verified.
+              </Typography>
+            </>
+          )}
         </Paper>
       </Box>
     );

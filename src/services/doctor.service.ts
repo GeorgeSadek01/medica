@@ -48,6 +48,11 @@ const doctorService = {
     });
     return res.data;
   },
+
+  getDashboardData: async () => {
+    const res = await api.get('/doctors/profile/dashboard/');
+    return res.data;
+  },
 };
 
 export default doctorService;
