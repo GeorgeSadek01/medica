@@ -15,9 +15,8 @@ import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { ValidationError } from 'yup';
 import { loginSchema } from '../validations';
 import { useAppDispatch, useAppSelector } from '../store';
-import { loginUser, clearError, selectAuth } from '../store/authSlice';
+import { loginUser, googleLoginUser, clearError, selectAuth } from '../store/authSlice';
 import type { LoginFormData } from '../validations';
-import { authService } from '../services';
 
 function LoginPage() {
   const dispatch = useAppDispatch();
@@ -82,17 +81,18 @@ function LoginPage() {
   };
 
   const googleButtonRef = useRef<HTMLDivElement>(null);
-  const scriptLoadedRef = useRef(false);
-  const initializedRef = useRef(false);
-  const loginAttemptedRef = useRef(false);
+  const initializingRef = useRef(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleGoogleCredential = async (credential: string) => {
-    if (loginAttemptedRef.current) return;
-    loginAttemptedRef.current = true;
+    setGoogleLoading(true);
+    setGoogleError('');
 
-    try {
-      const res = await authService.googleLogin(credential);
-      const role = res.user?.role;
+    const result = await dispatch(googleLoginUser(credential));
+    setGoogleLoading(false);
+
+    if (googleLoginUser.fulfilled.match(result)) {
+      const role = result.payload?.role;
       if (role === 'doctor') {
         navigate('/doctor/dashboard', { replace: true });
       } else if (role === 'admin') {
@@ -100,8 +100,7 @@ function LoginPage() {
       } else {
         navigate('/dashboard/patient', { replace: true });
       }
-    } catch {
-      loginAttemptedRef.current = false;
+    } else {
       setGoogleError('Google sign in failed');
     }
   };
@@ -110,11 +109,14 @@ function LoginPage() {
   credentialCallbackRef.current = handleGoogleCredential;
 
   useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
+    if (initializingRef.current) return;
+    initializingRef.current = true;
 
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (!clientId) return;
+    if (!clientId) {
+      setGoogleError('Google sign in is not configured');
+      return;
+    }
 
     const initGIS = () => {
       if (!window.google?.accounts?.id) return;
@@ -141,18 +143,20 @@ function LoginPage() {
       return;
     }
 
-    if (scriptLoadedRef.current) return;
-    scriptLoadedRef.current = true;
-
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
     script.onload = initGIS;
+    script.onerror = () => {
+      setGoogleError('Failed to load Google sign in');
+    };
     document.body.appendChild(script);
 
     return () => {
-      // cleanup not needed - GIS handles its own state
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
     };
   }, []);
 
@@ -231,7 +235,7 @@ function LoginPage() {
         </Typography>
       </Divider>
 
-      <Box ref={googleButtonRef} sx={{ display: 'flex', justifyContent: 'center', mb: 2, minHeight: 40 }} />
+      <Box ref={googleButtonRef} sx={{ display: 'flex', justifyContent: 'center', mb: 2, minHeight: 40, opacity: googleLoading ? 0.6 : 1, pointerEvents: googleLoading ? 'none' : 'auto' }} />
 
       <Typography variant="body2" align="center">
         Don&apos;t have an account?{' '}
