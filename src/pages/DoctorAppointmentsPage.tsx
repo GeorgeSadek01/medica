@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -22,9 +22,11 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  Divider,
 } from '@mui/material';
 
-import CloseIcon from '@mui/icons-material/Close';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import DescriptionIcon from '@mui/icons-material/Description';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -48,6 +50,19 @@ interface Appointment {
   status: string;
   notes: string;
   doctor_notes: string;
+  allowed_next_statuses?: string[];
+}
+
+interface MenuAction {
+  key: string;
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+  handler: () => void;
+}
+
+function isTerminal(status: string) {
+  return status === 'completed' || status === 'cancelled';
 }
 
 export default function DoctorAppointmentsPage() {
@@ -102,16 +117,43 @@ export default function DoctorAppointmentsPage() {
     setActiveApp(null);
   };
 
-  const handleSelectReject = async () => {
+  const handleConfirm = async () => {
+    if (!activeApp) return;
+    const appId = activeApp.id;
+    handleMenuClose();
+    try {
+      await appointmentService.confirm(appId);
+      setAlert({ type: 'success', text: 'Appointment confirmed successfully.' });
+      loadAppointments();
+    } catch {
+      setAlert({ type: 'error', text: 'Failed to confirm appointment.' });
+    }
+  };
+
+  const handleComplete = async () => {
+    if (!activeApp) return;
+    const appId = activeApp.id;
+    const notes = activeApp.doctor_notes;
+    handleMenuClose();
+    try {
+      await appointmentService.complete(appId, notes || undefined);
+      setAlert({ type: 'success', text: 'Appointment marked as completed.' });
+      loadAppointments();
+    } catch {
+      setAlert({ type: 'error', text: 'Failed to complete appointment.' });
+    }
+  };
+
+  const handleReject = async () => {
     if (!activeApp) return;
     const appId = activeApp.id;
     handleMenuClose();
     try {
       await appointmentService.reject(appId, 'Cancelled by Doctor');
-      setAlert({ type: 'success', text: 'Appointment status updated to Cancelled.' });
+      setAlert({ type: 'success', text: 'Appointment cancelled.' });
       loadAppointments();
     } catch {
-      setAlert({ type: 'error', text: 'Failed to reject appointment.' });
+      setAlert({ type: 'error', text: 'Failed to cancel appointment.' });
     }
   };
 
@@ -126,7 +168,7 @@ export default function DoctorAppointmentsPage() {
     if (!activeApp) return;
     try {
       await appointmentService.addNotes(activeApp.id, doctorNotes);
-      setAlert({ type: 'success', text: 'Doctor notes and diagnosis updated successfully! 📑' });
+      setAlert({ type: 'success', text: 'Doctor notes saved successfully.' });
       setIsNotesOpen(false);
       setActiveApp(null);
       loadAppointments();
@@ -134,6 +176,66 @@ export default function DoctorAppointmentsPage() {
       setAlert({ type: 'error', text: 'Failed to save doctor notes.' });
     }
   };
+
+  const menuActions = useMemo((): MenuAction[] => {
+    if (!activeApp) return [];
+    const status = activeApp.status;
+    const next = activeApp.allowed_next_statuses ?? [];
+    const actions: MenuAction[] = [];
+
+    if (next.includes('confirmed')) {
+      actions.push({
+        key: 'confirm',
+        label: 'Confirm Appointment',
+        icon: <CheckCircleIcon fontSize="small" />,
+        color: 'success.main',
+        handler: handleConfirm,
+      });
+    }
+
+    if (next.includes('completed')) {
+      actions.push({
+        key: 'complete',
+        label: 'Mark as Completed',
+        icon: <CheckCircleIcon fontSize="small" />,
+        color: 'info.main',
+        handler: handleComplete,
+      });
+    }
+
+    if (next.includes('cancelled')) {
+      const isPending = status === 'pending';
+      actions.push({
+        key: 'cancel',
+        label: isPending ? 'Reject & Cancel' : 'Cancel Appointment',
+        icon: <CancelIcon fontSize="small" />,
+        color: 'error.main',
+        handler: handleReject,
+      });
+    }
+
+    if (!isTerminal(status)) {
+      if (actions.length > 0) {
+        actions.push({
+          key: 'divider',
+          label: '',
+          icon: null,
+          color: '',
+          handler: () => {},
+        } as unknown as MenuAction);
+      }
+      actions.push({
+        key: 'notes',
+        label: 'Add / Edit Notes',
+        icon: <NoteAddIcon fontSize="small" />,
+        color: 'info.main',
+        handler: handleSelectAddNotes,
+      });
+    }
+
+    return actions;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeApp]);
 
   const getStatusChip = (status: string) => {
     const configs: Record<
@@ -234,8 +336,9 @@ export default function DoctorAppointmentsPage() {
                         endIcon={<ArrowDropDownIcon />}
                         onClick={(e) => handleMenuOpen(e, app)}
                         sx={{ textTransform: 'none', fontWeight: 'bold', borderRadius: 2 }}
+                        disabled={isTerminal(app.status)}
                       >
-                        Change Status
+                        {isTerminal(app.status) ? 'No Actions' : 'Change Status'}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -254,22 +357,27 @@ export default function DoctorAppointmentsPage() {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <MenuItem onClick={handleSelectReject} sx={{ color: 'error.main' }}>
-          <ListItemIcon>
-            <CloseIcon fontSize="small" color="error" />
-          </ListItemIcon>
-          <ListItemText primary="Reject & Cancel" slotProps={{ primary: { sx: { fontWeight: '500' } } }} />
-        </MenuItem>
-
-        <MenuItem onClick={handleSelectAddNotes} sx={{ color: 'info.main' }}>
-          <ListItemIcon>
-            <NoteAddIcon fontSize="small" color="info" />
-          </ListItemIcon>
-          <ListItemText
-            primary="Add Notes / Diagnosis"
-            slotProps={{ primary: { sx: { fontWeight: '500' } } }}
-          />
-        </MenuItem>
+        {menuActions.map((action) =>
+          action.key === 'divider' ? (
+            <Divider key="menu-divider" />
+          ) : (
+            <MenuItem
+              key={action.key}
+              onClick={action.handler}
+              sx={{ color: action.color }}
+            >
+              {action.icon && (
+                <ListItemIcon sx={{ color: action.color, minWidth: 36 }}>
+                  {action.icon}
+                </ListItemIcon>
+              )}
+              <ListItemText
+                primary={action.label}
+                slotProps={{ primary: { sx: { fontWeight: 500 } } }}
+              />
+            </MenuItem>
+          ),
+        )}
       </Menu>
 
       <Dialog
@@ -286,6 +394,12 @@ export default function DoctorAppointmentsPage() {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Adding clinical records for:{' '}
             <strong>{activeApp?.patient_name || `Patient #${activeApp?.patient}`}</strong>
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: 'block' }}>
+            Current status: <Chip label={activeApp?.status} size="small" sx={{ ml: 0.5 }} />
+            {activeApp?.status === 'confirmed' && (
+              <span> &mdash; Use &quot;Mark as Completed&quot; from the status menu to complete the appointment.</span>
+            )}
           </Typography>
           <TextField
             label="Doctor Clinical Notes & Prescription"

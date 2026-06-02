@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -14,18 +14,31 @@ import {
   Select,
   MenuItem,
   FormHelperText,
+  Paper,
+  Divider,
+  ToggleButtonGroup,
+  ToggleButton,
+  Chip,
 } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import {
+  Visibility,
+  VisibilityOff,
+  CloudUpload,
+  Person,
+  LocalHospital,
+  CheckCircle,
+  Description,
+} from '@mui/icons-material';
 import { ValidationError } from 'yup';
 import { registerSchema } from '../validations';
 import { useAppDispatch, useAppSelector } from '../store';
 import { registerUser, clearError, selectAuth } from '../store/authSlice';
 import api from '../services/api';
+import doctorService from '../services/doctor.service';
 import type { RegisterFormData } from '../validations';
 
 function RegisterPage() {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const { loading, error } = useAppSelector(selectAuth);
 
   const [form, setForm] = useState<RegisterFormData>({
@@ -42,6 +55,10 @@ function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof RegisterFormData, string>>>(
     {},
   );
+  const [identityFile, setIdentityFile] = useState<File | null>(null);
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  const [documentsUploading, setDocumentsUploading] = useState(false);
+  const [showVerificationBanner, setShowVerificationBanner] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -95,16 +112,51 @@ function RegisterPage() {
       return;
     }
 
-    const result = await dispatch(registerUser(form));
+    const payload = form.role === 'patient' ? { ...form, specialty: undefined } : form;
+    const result = await dispatch(registerUser(payload as RegisterFormData));
     if (registerUser.fulfilled.match(result)) {
-      navigate('/', { replace: true });
+      if (form.role === 'doctor' && (identityFile || certificateFile)) {
+        setDocumentsUploading(true);
+        try {
+          const fd = new FormData();
+          if (identityFile) fd.append('identity_document', identityFile);
+          if (certificateFile) fd.append('medical_certificate', certificateFile);
+          await doctorService.uploadDocuments(fd);
+        } catch (e) {
+          console.error('Document upload failed:', e);
+        }
+      }
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('medica_session_userId');
+      setShowVerificationBanner(true);
+    } else if (registerUser.rejected.match(result)) {
+      const payload = result.payload as { field_errors?: Partial<Record<keyof RegisterFormData, string>> };
+      if (payload?.field_errors) {
+        setFieldErrors(payload.field_errors);
+      }
     }
   };
+
+  const isDoctor = form.role === 'doctor';
+
+  if (showVerificationBanner) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 2 }}>
+        <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>
+          Account created! Please check your email to verify your account before signing in.
+        </Alert>
+        <Button variant="contained" component={RouterLink} to="/login" sx={{ mt: 1 }}>
+          Go to Sign In
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate>
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
           {error}
         </Alert>
       )}
@@ -149,43 +201,159 @@ function RegisterPage() {
       />
 
       <FormControl fullWidth margin="normal" error={!!fieldErrors.role}>
-        <InputLabel id="role-label">Role</InputLabel>
-        <Select
-          labelId="role-label"
+        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: 'text.primary' }}>
+          I want to register as
+        </Typography>
+        <ToggleButtonGroup
           value={form.role}
-          label="Role"
-          onChange={(e) => {
-            const value = e.target.value as 'patient' | 'doctor';
-            setForm((prev) => ({ ...prev, role: value }));
+          exclusive
+          fullWidth
+          onChange={(_, value) => {
+            if (value) setForm((prev) => ({ ...prev, role: value, specialty: '' }));
           }}
-          onBlur={handleBlur('role')}
+          sx={{
+            '& .MuiToggleButton-root': {
+              py: 1.5,
+              border: '1px solid',
+              borderColor: 'divider',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.95rem',
+              '&.Mui-selected': {
+                bgcolor: 'primary.main',
+                color: 'white',
+                '&:hover': { bgcolor: 'primary.dark' },
+              },
+            },
+          }}
         >
-          <MenuItem value="patient">Patient</MenuItem>
-          <MenuItem value="doctor">Doctor</MenuItem>
-        </Select>
+          <ToggleButton value="patient">
+            <Person sx={{ mr: 1 }} /> Patient
+          </ToggleButton>
+          <ToggleButton value="doctor">
+            <LocalHospital sx={{ mr: 1 }} /> Doctor
+          </ToggleButton>
+        </ToggleButtonGroup>
         {fieldErrors.role && <FormHelperText>{fieldErrors.role}</FormHelperText>}
       </FormControl>
 
-      {form.role === 'doctor' && (
-        <FormControl fullWidth margin="normal" error={!!fieldErrors.specialty}>
-          <InputLabel id="specialty-label">Specialty</InputLabel>
-          <Select
-            labelId="specialty-label"
-            value={form.specialty ?? ''}
-            label="Specialty"
-            onChange={(e) => {
-              setForm((prev) => ({ ...prev, specialty: e.target.value }));
+      {isDoctor && (
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2.5,
+            mt: 2,
+            mb: 1,
+            borderRadius: 2,
+            borderColor: 'primary.light',
+            bgcolor: 'action.hover',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <LocalHospital color="primary" fontSize="small" />
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'primary.main' }}>
+              Doctor Details
+            </Typography>
+          </Box>
+
+          <FormControl fullWidth margin="dense" error={!!fieldErrors.specialty}>
+            <InputLabel id="specialty-label">Specialty</InputLabel>
+            <Select
+              labelId="specialty-label"
+              value={form.specialty ?? ''}
+              label="Specialty"
+              size="small"
+              onChange={(e) => {
+                setForm((prev) => ({ ...prev, specialty: e.target.value }));
+              }}
+              onBlur={handleBlur('specialty')}
+            >
+              {specialties.map((s) => (
+                <MenuItem key={s} value={s}>
+                  {s}
+                </MenuItem>
+              ))}
+            </Select>
+            {fieldErrors.specialty && <FormHelperText>{fieldErrors.specialty}</FormHelperText>}
+          </FormControl>
+
+          <Divider sx={{ my: 2 }} />
+
+          <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 1.5 }}>
+            Verification Documents
+          </Typography>
+
+          <Button
+            variant="outlined"
+            component="label"
+            fullWidth
+            sx={{
+              textTransform: 'none',
+              py: 1.5,
+              borderStyle: 'dashed',
+              borderWidth: 2,
+              borderColor: identityFile ? 'success.main' : 'divider',
+              color: identityFile ? 'success.main' : 'text.primary',
+              '&:hover': { borderColor: 'primary.main', bgcolor: 'transparent' },
             }}
-            onBlur={handleBlur('specialty')}
+            startIcon={identityFile ? <CheckCircle /> : <Description />}
           >
-            {specialties.map((s) => (
-              <MenuItem key={s} value={s}>
-                {s}
-              </MenuItem>
-            ))}
-          </Select>
-          {fieldErrors.specialty && <FormHelperText>{fieldErrors.specialty}</FormHelperText>}
-        </FormControl>
+            {identityFile ? identityFile.name : 'Upload Identity Document'}
+            <input
+              type="file"
+              hidden
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={(e) => setIdentityFile(e.target.files?.[0] ?? null)}
+            />
+          </Button>
+          {identityFile && (
+            <Chip
+              icon={<CheckCircle />}
+              label={`Identity: ${identityFile.name}`}
+              size="small"
+              color="success"
+              variant="outlined"
+              onDelete={() => setIdentityFile(null)}
+              sx={{ mt: 1, maxWidth: '100%' }}
+            />
+          )}
+
+          <Button
+            variant="outlined"
+            component="label"
+            fullWidth
+            sx={{
+              mt: 1.5,
+              textTransform: 'none',
+              py: 1.5,
+              borderStyle: 'dashed',
+              borderWidth: 2,
+              borderColor: certificateFile ? 'success.main' : 'divider',
+              color: certificateFile ? 'success.main' : 'text.primary',
+              '&:hover': { borderColor: 'primary.main', bgcolor: 'transparent' },
+            }}
+            startIcon={certificateFile ? <CheckCircle /> : <CloudUpload />}
+          >
+            {certificateFile ? certificateFile.name : 'Upload Medical Certificate'}
+            <input
+              type="file"
+              hidden
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={(e) => setCertificateFile(e.target.files?.[0] ?? null)}
+            />
+          </Button>
+          {certificateFile && (
+            <Chip
+              icon={<CheckCircle />}
+              label={`Certificate: ${certificateFile.name}`}
+              size="small"
+              color="success"
+              variant="outlined"
+              onDelete={() => setCertificateFile(null)}
+              sx={{ mt: 1, maxWidth: '100%' }}
+            />
+          )}
+        </Paper>
       )}
 
       <TextField
@@ -241,15 +409,23 @@ function RegisterPage() {
         fullWidth
         variant="contained"
         size="large"
-        disabled={loading}
-        sx={{ mt: 2, mb: 2, py: 1.3 }}
+        disabled={loading || documentsUploading}
+        sx={{
+          mt: 3,
+          mb: 2,
+          py: 1.5,
+          borderRadius: 2,
+          fontWeight: 700,
+          textTransform: 'none',
+          fontSize: '1rem',
+        }}
       >
-        {loading ? 'Creating account...' : 'Create Account'}
+        {documentsUploading ? 'Uploading documents...' : loading ? 'Creating account...' : 'Create Account'}
       </Button>
 
-      <Typography variant="body2" align="center">
+      <Typography variant="body2" align="center" color="text.secondary">
         Already have an account?{' '}
-        <Link component={RouterLink} to="/login" underline="hover">
+        <Link component={RouterLink} to="/login" underline="hover" sx={{ fontWeight: 600 }}>
           Sign in
         </Link>
       </Typography>

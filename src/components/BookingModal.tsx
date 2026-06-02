@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Button,
-  TextField,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemButton,
   Typography,
   Box,
+  Grid,
+  Divider,
+  Alert,
+  Chip,
+  Paper,
 } from '@mui/material';
 import doctorService from '../services/doctor.service';
 import appointmentService from '../services/appointment.service';
@@ -25,6 +25,7 @@ interface Slot {
   end_time: string;
   day: string;
   originalBlockId: number;
+  slotIndex: number;
 }
 
 interface DoctorInfo {
@@ -59,8 +60,16 @@ interface Props {
   onBooked?: () => void;
 }
 
+interface DateOption {
+  dateStr: string;
+  dayName: string;
+  dayNum: number;
+  month: string;
+}
+
+const DAYS_LOOKAHEAD = 30;
+
 function getWeekdayName(dateStr: string) {
-  // dateStr expected as YYYY-MM-DD; construct local Date to avoid UTC offsets
   const parts = dateStr.split('-');
   if (parts.length !== 3) return '';
   const [y, m, d] = parts.map((p) => parseInt(p, 10));
@@ -68,28 +77,94 @@ function getWeekdayName(dateStr: string) {
   return dt.toLocaleDateString('en-US', { weekday: 'long' });
 }
 
+function generateDateOptions(availability: AvailabilityBlock[]): DateOption[] {
+  const availableDays = new Set(availability.map((b) => b.day));
+  const dates: DateOption[] = [];
+  const today = new Date();
+  for (let i = 0; i < DAYS_LOOKAHEAD; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+    if (availableDays.has(dayName)) {
+      dates.push({
+        dateStr: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+        dayName: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        dayNum: d.getDate(),
+        month: d.toLocaleDateString('en-US', { month: 'short' }),
+      });
+    }
+  }
+  return dates;
+}
+
+function generateSlotsForDate(date: string, blocks: AvailabilityBlock[]): Slot[] {
+  const weekday = getWeekdayName(date);
+  const rawBlocks = blocks.filter((s) => s.day === weekday);
+  const slots: Slot[] = [];
+
+  rawBlocks.forEach((block) => {
+    const [startH, startM] = (block.start_time || '00:00').split(':').map(Number);
+    const [endH, endM] = (block.end_time || '23:59').split(':').map(Number);
+
+    let currentH = startH;
+    let currentM = startM;
+    let slotIndex = 0;
+
+    while (currentH < endH || (currentH === endH && currentM < endM)) {
+      let nextH = currentH + 1;
+      let nextM = currentM;
+      if (nextH > endH || (nextH === endH && nextM > endM)) {
+        nextH = endH;
+        nextM = endM;
+      }
+
+      const sTime = `${String(currentH).padStart(2, '0')}:${String(currentM).padStart(2, '0')}`;
+      const eTime = `${String(nextH).padStart(2, '0')}:${String(nextM).padStart(2, '0')}`;
+
+      slots.push({
+        id: `${block.id}-${slotIndex}`,
+        start_time: sTime,
+        end_time: eTime,
+        day: block.day,
+        originalBlockId: block.id,
+        slotIndex,
+      });
+
+      currentH = nextH;
+      currentM = nextM;
+      slotIndex++;
+    }
+  });
+
+  return slots;
+}
+
 function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
   const user = useSelector(selectUser);
-  const [date, setDate] = useState<string>('');
-  const today = new Date();
-  const minDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
-    today.getDate(),
-  ).padStart(2, '0')}`;
+  const navigate = useNavigate();
+
   const [availability, setAvailability] = useState<AvailabilityBlock[]>([]);
+  const [date, setDate] = useState<string>('');
   const [slotsForDate, setSlotsForDate] = useState<Slot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [bookingError, setBookingError] = useState('');
   const [alreadyBooked, setAlreadyBooked] = useState(false);
+  const [doctorInfo, setDoctorInfo] = useState<DoctorInfo | null>(null);
+
+  const availableDates = useMemo(() => generateDateOptions(availability), [availability]);
 
   useEffect(() => {
     (async () => {
-      const av = await doctorService.getAvailability(doctorId);
+      const [av, doc] = await Promise.all([
+        doctorService.getAvailability(doctorId),
+        doctorService.getById(doctorId),
+      ]);
       setAvailability(av);
+      setDoctorInfo(doc);
     })();
   }, [doctorId, open]);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!date) {
       setSlotsForDate([]);
@@ -97,59 +172,26 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
       setAlreadyBooked(false);
       return;
     }
-    const weekday = getWeekdayName(date);
-    const rawBlocks = availability.filter((s) => s.day === weekday);
 
-    const generatedSlots: Slot[] = [];
-    rawBlocks.forEach((block) => {
-      const [startH, startM] = (block.start_time || '00:00').split(':').map(Number);
-      const [endH, endM] = (block.end_time || '23:59').split(':').map(Number);
-
-      let currentH = startH;
-      let currentM = startM;
-      let slotIndex = 0;
-
-      while (currentH < endH || (currentH === endH && currentM < endM)) {
-        let nextH = currentH + 1;
-        let nextM = currentM;
-        if (nextH > endH || (nextH === endH && nextM > endM)) {
-          nextH = endH;
-          nextM = endM;
-        }
-
-        const sTime = `${String(currentH).padStart(2, '0')}:${String(currentM).padStart(2, '0')}`;
-        const eTime = `${String(nextH).padStart(2, '0')}:${String(nextM).padStart(2, '0')}`;
-
-        generatedSlots.push({
-          id: `${block.id}-${slotIndex}`,
-          start_time: sTime,
-          end_time: eTime,
-          day: block.day,
-          originalBlockId: block.id,
-        });
-
-        currentH = nextH;
-        currentM = nextM;
-        slotIndex++;
-      }
-    });
+    const generatedSlots = generateSlotsForDate(date, availability);
 
     let slots = generatedSlots;
-
-    // if selected date is today, filter out slots that already passed
     const todayStr = new Date().toISOString().slice(0, 10);
     if (date === todayStr) {
       const now = new Date();
       const nowMinutes = now.getHours() * 60 + now.getMinutes();
       slots = slots.filter((s) => {
         const [h, m] = (s.start_time || '00:00').split(':').map(Number);
-        const slotMinutes = h * 60 + m;
-        return slotMinutes > nowMinutes;
+        return h * 60 + m > nowMinutes;
       });
     }
+
     (async () => {
       try {
-        const allAppts = await appointmentService.getAll();
+        const [allAppts, doc] = await Promise.all([
+          appointmentService.getAll(),
+          doctorService.getById(doctorId),
+        ]);
         const taken = new Set<string>();
         let patientAlreadyBooked = false;
 
@@ -161,33 +203,20 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
           }
         });
 
-        const doc = await doctorService.getById(doctorId);
         const bookedSlots: Record<string, string[]> =
-          ((doc as unknown as Record<string, unknown>)?.bookedSlots as Record<string, string[]>) ??
-          {};
+          ((doc as unknown as Record<string, unknown>)?.bookedSlots as Record<string, string[]>) ?? {};
         const paidTimes: string[] = bookedSlots[date] ?? [];
         paidTimes.forEach((t) => taken.add(t));
 
         setAlreadyBooked(patientAlreadyBooked);
-        const availableSlots = slots.filter((s) => !taken.has(s.id) && !taken.has(s.start_time));
-        setSlotsForDate(availableSlots);
+        setSlotsForDate(slots.filter((s) => !taken.has(s.id) && !taken.has(s.start_time)));
       } catch {
         setSlotsForDate(slots);
       }
     })();
+
     setSelectedSlot(null);
   }, [date, availability, doctorId, user?.id]);
-  /* eslint-enable react-hooks/set-state-in-effect */
-
-  const navigate = useNavigate();
-
-  const [doctorInfo, setDoctorInfo] = useState<DoctorInfo | null>(null);
-  useEffect(() => {
-    (async () => {
-      const doc = await doctorService.getById(doctorId);
-      setDoctorInfo(doc);
-    })();
-  }, [doctorId]);
 
   const handleBook = async () => {
     if (!selectedSlot || !date) return;
@@ -198,7 +227,7 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
       const newAppointment = await appointmentService.book({
         doctor: doctorId,
         date,
-        time_slot: selectedSlot.id,
+        time_slot: selectedSlot.originalBlockId * 100 + selectedSlot.slotIndex,
         time: selectedSlot.start_time,
         patient: user?.id,
         patient_name: user ? `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() : '',
@@ -214,110 +243,123 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
     }
   };
 
+  const handleDateSelect = (dateStr: string) => {
+    setDate(dateStr);
+    setSelectedSlot(null);
+  };
+
   return (
     <>
-      <Dialog open={open} onClose={onClose} fullWidth>
-        <DialogTitle>Book Appointment</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-            <TextField
-              label="Date"
-              type="date"
-              variant="outlined"
-              value={date}
-              onChange={(e) => {
-                const raw = e.target.value;
-
-                // normalize input to YYYY-MM-DD whether user typed MM/DD/YYYY or already YYYY-MM-DD
-                let normalized = raw;
-                let y = 0,
-                  m = 0,
-                  d = 0;
-                if (raw.includes('/')) {
-                  // expect MM/DD/YYYY
-                  const parts = raw.split('/');
-                  if (parts.length === 3) {
-                    m = parseInt(parts[0], 10) || 0;
-                    d = parseInt(parts[1], 10) || 0;
-                    y = parseInt(parts[2], 10) || 0;
-                    normalized = `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(
-                      d,
-                    ).padStart(2, '0')}`;
-                  }
-                } else if (raw.includes('-')) {
-                  const parts = raw.split('-');
-                  if (parts.length === 3) {
-                    y = parseInt(parts[0], 10) || 0;
-                    m = parseInt(parts[1], 10) || 0;
-                    d = parseInt(parts[2], 10) || 0;
-                  }
-                }
-
-                try {
-                  // construct local dates to compare (avoid timezone offsets)
-                  const sel = new Date(
-                    y || Number(normalized.split('-')[0]),
-                    (m || Number(normalized.split('-')[1])) - 1,
-                    d || Number(normalized.split('-')[2]),
-                  );
-                  const min = new Date(
-                    minDate.split('-')[0] as unknown as number,
-                    Number(minDate.split('-')[1]) - 1,
-                    Number(minDate.split('-')[2]),
-                  );
-                  if (isNaN(sel.getTime())) {
-                    setDate(minDate);
-                  } else if (sel.getTime() < min.getTime()) {
-                    setDate(minDate);
-                  } else {
-                    setDate(normalized);
-                  }
-                } catch {
-                  setDate(minDate);
-                }
-              }}
-              slotProps={{ inputLabel: { shrink: true }, htmlInput: { min: minDate } }}
-            />
-          </Box>
-
-          <Typography sx={{ mt: 2 }}>Available slots for selected date:</Typography>
-          {alreadyBooked && (
-            <Typography
-              color="warning.main"
-              sx={{ mt: 1, mb: 1, fontSize: '0.875rem', fontWeight: 'bold' }}
-            >
-              ⚠️ You already have an appointment with this doctor on this day. You cannot book
-              another.
-            </Typography>
-          )}
-          <List>
-            {slotsForDate.length === 0 && (
-              <ListItem>
-                <ListItemText primary="No available slots for this date" />
-              </ListItem>
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            Book Appointment
+            {doctorInfo && (
+              <Chip
+                label={`${doctorInfo.session_price ?? 0} EGP`}
+                size="small"
+                color="primary"
+                sx={{ ml: 'auto', fontWeight: 600 }}
+              />
             )}
-            {slotsForDate.map((s) => (
-              <ListItem key={s.id} disablePadding>
-                <ListItemButton
-                  selected={selectedSlot?.id === s.id}
-                  onClick={() => setSelectedSlot(s)}
-                  disabled={alreadyBooked}
-                >
-                  <ListItemText primary={`${s.start_time} — ${s.end_time}`} secondary={s.day} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
+          </Box>
+        </DialogTitle>
+
+        <DialogContent>
+          {availability.length === 0 ? (
+            <Alert severity="info" sx={{ mt: 1 }}>
+              This doctor has not set their availability yet.
+            </Alert>
+          ) : (
+            <>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+                Select a Date
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 3 }}>
+                {availableDates.map((d) => {
+                  const isSelected = date === d.dateStr;
+                  const isToday = d.dateStr === new Date().toISOString().slice(0, 10);
+                  return (
+                    <Button
+                      key={d.dateStr}
+                      variant={isSelected ? 'contained' : isToday ? 'outlined' : 'outlined'}
+                      color={isToday && !isSelected ? 'primary' : 'primary'}
+                      onClick={() => handleDateSelect(d.dateStr)}
+                      sx={{
+                        minWidth: 72,
+                        flexDirection: 'column',
+                        py: 1,
+                        px: 1.5,
+                        borderColor: isSelected ? undefined : 'divider',
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{ fontWeight: 600, lineHeight: 1.2 }}
+                      >
+                        {d.dayName}
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 700, lineHeight: 1.3 }}>
+                        {d.dayNum}
+                      </Typography>
+                      <Typography variant="caption" sx={{ lineHeight: 1.2 }}>
+                        {d.month}
+                      </Typography>
+                    </Button>
+                  );
+                })}
+              </Box>
+
+              {alreadyBooked && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  You already have an appointment with this doctor on this day.
+                </Alert>
+              )}
+
+              {date && (
+                <>
+                  <Divider sx={{ mb: 2 }} />
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+                    Select a Time
+                  </Typography>
+                  {slotsForDate.length === 0 ? (
+                    <Paper variant="outlined" sx={{ p: 3, textAlign: 'center' }}>
+                      <Typography color="text.secondary">No available slots for this date.</Typography>
+                    </Paper>
+                  ) : (
+                    <Grid container spacing={1}>
+                      {slotsForDate.map((s) => (
+                        <Grid size={{ xs: 6 }} key={s.id}>
+                          <Button
+                            variant={selectedSlot?.id === s.id ? 'contained' : 'outlined'}
+                            fullWidth
+                            onClick={() => setSelectedSlot(s)}
+                            disabled={alreadyBooked}
+                            sx={{
+                              py: 1.5,
+                              borderColor: selectedSlot?.id === s.id ? undefined : 'divider',
+                            }}
+                          >
+                            {s.start_time} &mdash; {s.end_time}
+                          </Button>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  )}
+                </>
+              )}
+            </>
+          )}
         </DialogContent>
 
-        <DialogActions>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={onClose}>Close</Button>
           <Button
             onClick={() => setConfirmOpen(true)}
-            disabled={!selectedSlot || !date || alreadyBooked}
+            disabled={!selectedSlot || !date || alreadyBooked || availability.length === 0}
             variant="contained"
           >
-            Book
+            Continue
           </Button>
         </DialogActions>
       </Dialog>
@@ -328,25 +370,39 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
           setConfirmOpen(false);
           setBookingError('');
         }}
+        maxWidth="xs"
+        fullWidth
       >
         <DialogTitle>Confirm Booking</DialogTitle>
         <DialogContent>
-          <Typography>Date: {date}</Typography>
-          <Typography>
-            Time: {selectedSlot?.start_time} — {selectedSlot?.end_time}
-          </Typography>
-          {doctorInfo && doctorInfo.session_price && (
-            <Typography sx={{ mt: 1, fontWeight: 'bold' }}>
-              Session Price: {doctorInfo.session_price} EGP
-            </Typography>
-          )}
+          <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography color="text.secondary">Date</Typography>
+              <Typography fontWeight={600}>{date}</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography color="text.secondary">Time</Typography>
+              <Typography fontWeight={600}>
+                {selectedSlot?.start_time} &mdash; {selectedSlot?.end_time}
+              </Typography>
+            </Box>
+            {doctorInfo?.session_price ? (
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography color="text.secondary">Price</Typography>
+                <Typography fontWeight={700} color="primary">
+                  {doctorInfo.session_price} EGP
+                </Typography>
+              </Box>
+            ) : null}
+          </Paper>
+
           {bookingError && (
-            <Typography color="error" sx={{ mt: 2 }}>
+            <Alert severity="error" sx={{ mb: 1 }}>
               {bookingError}
-            </Typography>
+            </Alert>
           )}
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button
             onClick={() => {
               setConfirmOpen(false);

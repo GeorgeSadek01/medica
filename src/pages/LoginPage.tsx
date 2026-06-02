@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -9,6 +9,7 @@ import {
   InputAdornment,
   IconButton,
   Link,
+  Divider,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { ValidationError } from 'yup';
@@ -16,6 +17,7 @@ import { loginSchema } from '../validations';
 import { useAppDispatch, useAppSelector } from '../store';
 import { loginUser, clearError, selectAuth } from '../store/authSlice';
 import type { LoginFormData } from '../validations';
+import { authService } from '../services';
 
 function LoginPage() {
   const dispatch = useAppDispatch();
@@ -27,6 +29,7 @@ function LoginPage() {
   const [form, setForm] = useState<LoginFormData>({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof LoginFormData, string>>>({});
+  const [googleError, setGoogleError] = useState('');
 
   const validateField = (name: keyof LoginFormData, value: string) => {
     try {
@@ -78,6 +81,81 @@ function LoginPage() {
     }
   };
 
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+  const scriptLoadedRef = useRef(false);
+  const initializedRef = useRef(false);
+  const loginAttemptedRef = useRef(false);
+
+  const handleGoogleCredential = async (credential: string) => {
+    if (loginAttemptedRef.current) return;
+    loginAttemptedRef.current = true;
+
+    try {
+      const res = await authService.googleLogin(credential);
+      const role = res.user?.role;
+      if (role === 'doctor') {
+        navigate('/doctor/dashboard', { replace: true });
+      } else if (role === 'admin') {
+        navigate('/admin/dashboard', { replace: true });
+      } else {
+        navigate('/dashboard/patient', { replace: true });
+      }
+    } catch {
+      loginAttemptedRef.current = false;
+      setGoogleError('Google sign in failed');
+    }
+  };
+
+  const credentialCallbackRef = useRef(handleGoogleCredential);
+  credentialCallbackRef.current = handleGoogleCredential;
+
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) return;
+
+    const initGIS = () => {
+      if (!window.google?.accounts?.id) return;
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: (response: { credential: string }) => {
+          if (response?.credential) {
+            credentialCallbackRef.current(response.credential);
+          }
+        },
+      });
+      if (googleButtonRef.current) {
+        window.google.accounts.id.renderButton(googleButtonRef.current, {
+          theme: 'outline',
+          size: 'large',
+          text: 'signin_with',
+          shape: 'rectangular',
+        });
+      }
+    };
+
+    if (window.google?.accounts?.id) {
+      initGIS();
+      return;
+    }
+
+    if (scriptLoadedRef.current) return;
+    scriptLoadedRef.current = true;
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = initGIS;
+    document.body.appendChild(script);
+
+    return () => {
+      // cleanup not needed - GIS handles its own state
+    };
+  }, []);
+
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate>
       {redirectMessage && (
@@ -86,9 +164,9 @@ function LoginPage() {
         </Alert>
       )}
 
-      {error && (
+      {(error || googleError) && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
+          {error || googleError}
         </Alert>
       )}
 
@@ -130,6 +208,12 @@ function LoginPage() {
         }}
       />
 
+      <Typography variant="body2" align="right" sx={{ mt: 0.5 }}>
+        <Link component={RouterLink} to="/forgot-password" underline="hover">
+          Forgot password?
+        </Link>
+      </Typography>
+
       <Button
         type="submit"
         fullWidth
@@ -140,6 +224,14 @@ function LoginPage() {
       >
         {loading ? 'Signing in...' : 'Sign In'}
       </Button>
+
+      <Divider sx={{ my: 2 }}>
+        <Typography variant="body2" color="text.secondary">
+          OR
+        </Typography>
+      </Divider>
+
+      <Box ref={googleButtonRef} sx={{ display: 'flex', justifyContent: 'center', mb: 2, minHeight: 40 }} />
 
       <Typography variant="body2" align="center">
         Don&apos;t have an account?{' '}

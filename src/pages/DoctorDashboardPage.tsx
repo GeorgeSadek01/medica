@@ -14,6 +14,7 @@ import {
   TableHead,
   TableRow,
   Chip,
+  Button,
 } from '@mui/material';
 
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -24,9 +25,8 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import GppMaybeIcon from '@mui/icons-material/GppMaybe';
 
 import appointmentService from '../services/appointment.service';
-import doctorService from '../services/doctor.service';
-import { useAppSelector } from '../store';
-import { selectAuth } from '../store/authSlice';
+import { useAppDispatch, useAppSelector } from '../store';
+import { logout, selectAuth } from '../store/authSlice';
 
 interface Appointment {
   id: number;
@@ -42,11 +42,62 @@ interface Appointment {
   doctor_notes: string;
 }
 
+function ReuploadForm({ onCancel, onDone }: { onCancel: () => void; onDone: () => void }) {
+  const [identityFile, setIdentityFile] = useState<File | null>(null);
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async () => {
+    if (!identityFile || !certificateFile) {
+      setError('Please select both files');
+      return;
+    }
+    setUploading(true);
+    setError('');
+    try {
+      const fd = new FormData();
+      fd.append('identity_document', identityFile);
+      fd.append('medical_certificate', certificateFile);
+      await doctorService.uploadDocuments(fd);
+      onDone();
+    } catch (e: any) {
+      setError(e?.response?.data?.error || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <Box sx={{ mt: 2, textAlign: 'left' }}>
+      <Typography variant="subtitle2" sx={{ mb: 1 }}>Select new documents</Typography>
+      <Button variant="outlined" size="small" component="label" sx={{ mr: 1, mb: 1 }}>
+        {identityFile ? identityFile.name : 'Identity Document'}
+        <input type="file" hidden accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setIdentityFile(e.target.files?.[0] ?? null)} />
+      </Button>
+      <Button variant="outlined" size="small" component="label" sx={{ mr: 1, mb: 1 }}>
+        {certificateFile ? certificateFile.name : 'Medical Certificate'}
+        <input type="file" hidden accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setCertificateFile(e.target.files?.[0] ?? null)} />
+      </Button>
+      <Box sx={{ mt: 1 }}>
+        <Button size="small" variant="contained" onClick={handleSubmit} disabled={uploading} sx={{ mr: 1 }}>
+          {uploading ? 'Uploading...' : 'Submit'}
+        </Button>
+        <Button size="small" onClick={onCancel}>Cancel</Button>
+      </Box>
+      {error && <Typography variant="caption" color="error" sx={{ display: 'block', mt: 1 }}>{error}</Typography>}
+    </Box>
+  );
+}
+
 export default function DoctorDashboardPage() {
   const { user } = useAppSelector(selectAuth);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [doctorName, setDoctorName] = useState('Doctor');
+  const [docStatus, setDocStatus] = useState<'none' | 'pending' | 'rejected' | 'approved'>('none');
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [resubmitting, setResubmitting] = useState(false);
 
   const fetchDashboardData = async () => {
     try {
@@ -68,6 +119,19 @@ export default function DoctorDashboardPage() {
         setAppointments(doctorAppointments);
       } else {
         setAppointments(allAppointments);
+      }
+
+      if (user?.role === 'doctor' && !user.verified) {
+        try {
+          const docs = await adminService.getDocuments();
+          const myDoc = (docs as any[]).find((d: any) => d.doctor_id === user.id);
+          if (myDoc) {
+            setDocStatus(myDoc.status);
+            setRejectionReason(myDoc.rejection_reason || '');
+          }
+        } catch {
+          // ignore
+        }
       }
     } catch (error) {
       console.error('Error loading dashboard:', error);
@@ -118,20 +182,56 @@ export default function DoctorDashboardPage() {
   }
 
   if (user && user.role === 'doctor' && !user.verified) {
+    const isRejected = docStatus === 'rejected';
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 64px)', mx: -3, mt: -3, px: 3, bgcolor: 'background.default', width: { md: '100vw' }, ml: { md: '-240px' } }}>
         <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 4, maxWidth: 480 }}>
-          <GppMaybeIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
+          <GppMaybeIcon sx={{ fontSize: 64, color: isRejected ? 'error.main' : 'warning.main', mb: 2 }} />
           <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
-            Account Pending Verification
+            {isRejected ? 'Account Verification Rejected' : 'Account Pending Verification'}
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Your doctor account is awaiting approval from an administrator.
-            You will not be able to manage appointments or access patient data until your account is verified.
-          </Typography>
-          <Typography variant="body2" color="text.disabled">
-            Please check back later or contact support.
-          </Typography>
+          {isRejected ? (
+            <>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                Your submitted documents did not meet the verification requirements.
+              </Typography>
+              {rejectionReason && (
+                <Typography variant="body2" color="error" sx={{ mb: 1, fontWeight: 600 }}>
+                  Reason: {rejectionReason}
+                </Typography>
+              )}
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontStyle: 'italic' }}>
+                Please contact support or re-submit your documents for review.
+              </Typography>
+              <Button
+                variant="contained"
+                size="small"
+                disabled={resubmitting}
+                onClick={() => setResubmitting(true)}
+              >
+                Re-upload Documents
+              </Button>
+              {resubmitting && (
+                <ReuploadForm
+                  onCancel={() => setResubmitting(false)}
+                  onDone={() => {
+                    setResubmitting(false);
+                    setDocStatus('pending');
+                  }}
+                />
+              )}
+            </>
+          ) : (
+            <>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                Your doctor account is awaiting approval from an administrator.
+                You will not be able to manage appointments or access patient data until your account is verified.
+              </Typography>
+              <Typography variant="body2" color="text.disabled">
+                Please check back later or contact support.
+              </Typography>
+            </>
+          )}
         </Paper>
       </Box>
     );

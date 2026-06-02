@@ -1,6 +1,19 @@
 import api from './api';
 
+interface DashboardStats {
+  users: { total: number; patients: number; doctors: number; unverified_doctors: number };
+  appointments: { total: number; pending: number; confirmed: number; completed: number; cancelled: number };
+  specialties: number;
+  recent_appointments: Array<{
+    id: number; doctor_name: string; patient_name: string; date: string; time: string; status: string;
+  }>;
+}
+
 const adminService = {
+  getDashboardStats: async (): Promise<DashboardStats> => {
+    const res = await api.get('/admin/dashboard/');
+    return res.data;
+  },
   getAllUsers: async (params?: Record<string, string>) => {
     const res = await api.get('/users/', { params });
     return res.data;
@@ -64,7 +77,8 @@ const adminService = {
       params.patient = String(userId);
     }
     const res = await api.get('/appointments/', { params });
-    return res.data;
+    const data = res.data;
+    return Array.isArray(data) ? data : (data.results ?? []);
   },
 
   getDoctors: async () => {
@@ -96,6 +110,18 @@ const adminService = {
   getUnverifiedDoctorsCount: async () => {
     const doctors = await adminService.getUnverifiedDoctors();
     return doctors.length;
+  },
+
+  getDocuments: async (status?: string) => {
+    const params: Record<string, string> = {};
+    if (status) params.status = status;
+    const res = await api.get('/doctors/documents/', { params });
+    return res.data;
+  },
+
+  reviewDocument: async (id: number, data: { status: string; rejection_reason?: string }) => {
+    const res = await api.patch(`/doctors/documents/${id}/review/`, data);
+    return res.data;
   },
 };
 

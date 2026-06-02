@@ -1,5 +1,5 @@
-export { loginSchema, registerSchema } from './auth.validation';
-export type { LoginFormData, RegisterFormData } from './auth.validation';
+export { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from './auth.validation';
+export type { LoginFormData, RegisterFormData, ForgotPasswordFormData, ResetPasswordFormData } from './auth.validation';
 
 export { bookAppointmentSchema, rescheduleSchema } from './appointment.validation';
 export type { BookAppointmentFormData, RescheduleFormData } from './appointment.validation';

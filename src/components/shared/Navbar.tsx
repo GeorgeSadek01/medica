@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -60,8 +60,18 @@ const Navbar = ({ onSidebarToggle }: NavbarProps) => {
 
         <Typography
           variant="h6"
-          sx={{ flexGrow: 1, cursor: 'pointer', fontWeight: 700 }}
-          onClick={() => navigate('/')}
+          component={Link}
+          to="/"
+          sx={{
+            flexGrow: 1,
+            cursor: 'pointer',
+            fontWeight: 800,
+            letterSpacing: '-0.5px',
+            transition: 'all 0.2s ease',
+            textDecoration: 'none',
+            color: 'inherit',
+            '&:hover': { opacity: 0.85, transform: 'scale(1.03)' },
+          }}
         >
           Medica
         </Typography>

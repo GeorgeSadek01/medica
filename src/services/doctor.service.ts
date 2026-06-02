@@ -41,6 +41,13 @@ const doctorService = {
     const res = await api.delete(`/doctors/${doctorId}/availability/${slotId}/`);
     return res.data;
   },
+
+  uploadDocuments: async (formData: FormData) => {
+    const res = await api.post('/doctors/documents/upload/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  },
 };
 
 export default doctorService;

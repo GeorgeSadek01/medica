@@ -5,6 +5,7 @@ import {
 } from '@mui/material';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import GppMaybeIcon from '@mui/icons-material/GppMaybe';
+import DescriptionIcon from '@mui/icons-material/Description';
 import { useParams, useNavigate } from 'react-router-dom';
 import adminService from '../services/admin.service';
 
@@ -17,6 +18,7 @@ export default function AdminUserDetail() {
   const [doctorInfo, setDoctorInfo] = useState<any | null>(null);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
 
@@ -32,10 +34,18 @@ export default function AdminUserDetail() {
         const match = docs.find((d: any) => d.id === u.id || d.contact === u.email);
         setDoctorInfo(match || null);
       }
+      try {
+        const allDocs = await adminService.getDocuments();
+        const userDoc = (allDocs as any[]).filter((d: any) => d.doctor_id === u.id);
+        setDocuments(userDoc);
+      } catch (err) {
+        console.error('Failed to load doctor documents:', err);
+      }
     }
 
     const appts = await adminService.getAppointmentsByUser(Number(id), u?.role === 'doctor');
     setAppointments(appts);
+
     setLoading(false);
   };
 
@@ -115,74 +125,53 @@ export default function AdminUserDetail() {
         <Divider sx={{ mb: 2 }} />
         <Typography variant="body2"><strong>Email:</strong> {user.email}</Typography>
         {user.phone ? <Typography variant="body2"><strong>Phone:</strong> {user.phone}</Typography> : null}
-        {doctorInfo && (
-          <>
-            <Typography variant="body2"><strong>Specialty:</strong> {doctorInfo.specialty}</Typography>
-            {doctorInfo.bio && <Typography variant="body2"><strong>Bio:</strong> {doctorInfo.bio}</Typography>}
-            {doctorInfo.session_price != null && (
-              <Typography variant="body2"><strong>Session Price:</strong> {doctorInfo.session_price} EGP</Typography>
-            )}
-          </>
-        )}
-      </Paper>
-
-      <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-        {user.role === 'doctor' ? 'Doctor Appointments' : 'Patient Appointments'}
-      </Typography>
-
-      <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
-        <Table>
-          <TableHead sx={{ backgroundColor: '#f9fafb' }}>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 'bold' }}>{user.role === 'doctor' ? 'Patient' : 'Doctor'}</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Specialty</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Time</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {displayed.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 3, color: 'text.secondary' }}>
-                  No appointments found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              displayed.map((a: any) => (
-                <TableRow key={a.id} hover>
-                  <TableCell>{user.role === 'doctor' ? a.patient_name : a.doctor_name}</TableCell>
-                  <TableCell>{a.specialty}</TableCell>
-                  <TableCell>{a.date}</TableCell>
-                  <TableCell>{a.time}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={a.status}
-                      size="small"
-                      color={
-                        a.status === 'confirmed' ? 'success' :
-                        a.status === 'pending' ? 'warning' :
-                        a.status === 'cancelled' ? 'error' : 'info'
-                      }
-                    />
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {totalPages > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(_, p) => setPage(p)}
-            color="primary"
-          />
-        </Box>
-      )}
+          {doctorInfo && (
+            <>
+              <Typography variant="body2"><strong>Specialty:</strong> {doctorInfo.specialty}</Typography>
+              {doctorInfo.bio && <Typography variant="body2"><strong>Bio:</strong> {doctorInfo.bio}</Typography>}
+              {doctorInfo.session_price != null && (
+                <Typography variant="body2"><strong>Session Price:</strong> {doctorInfo.session_price} EGP</Typography>
+              )}
+            </>
+          )}
+          {user.role === 'doctor' && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                Verification Documents
+              </Typography>
+              {documents.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  No documents uploaded yet.
+                </Typography>
+              ) : (
+                documents.map((doc: any) => (
+                  <Box key={doc.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                    <DescriptionIcon fontSize="small" color="action" />
+                    <Typography variant="body2">
+                      Status:{' '}
+                      <Chip
+                        label={doc.status}
+                        size="small"
+                        color={doc.status === 'approved' ? 'success' : doc.status === 'rejected' ? 'error' : 'warning'}
+                        variant={doc.status === 'pending' ? 'outlined' : 'filled'}
+                      />
+                    </Typography>
+                    {doc.identity_document && (
+                      <Button size="small" href={doc.identity_document} target="_blank">
+                        Identity
+                      </Button>
+                    )}
+                    {doc.medical_certificate && (
+                      <Button size="small" href={doc.medical_certificate} target="_blank">
+                        Certificate
+                      </Button>
+                    )}
+                  </Box>
+                ))
+              )}
+            </Box>
+          )}
+        </Paper>
 
       <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block', textAlign: 'center' }}>
         Showing {displayed.length} of {appointments.length} appointment{appointments.length !== 1 ? 's' : ''}

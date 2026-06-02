@@ -33,7 +33,13 @@ export const loginUser = createAsyncThunk(
     try {
       const res = await authService.login(data);
       return res.user as User;
-    } catch (err) {
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { error?: string } } };
+        if (axiosErr.response?.data?.error) {
+          return rejectWithValue(axiosErr.response.data.error);
+        }
+      }
       return rejectWithValue(err instanceof Error ? err.message : 'Login failed');
     }
   },
@@ -55,8 +61,14 @@ export const registerUser = createAsyncThunk(
     try {
       const res = await authService.register(data);
       return res.user as User;
-    } catch (err) {
-      return rejectWithValue(err instanceof Error ? err.message : 'Registration failed');
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: unknown } };
+        if (axiosErr.response?.data) {
+          return rejectWithValue(axiosErr.response.data);
+        }
+      }
+      return rejectWithValue({ error: err instanceof Error ? err.message : 'Registration failed' });
     }
   },
 );
@@ -116,7 +128,8 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = (action.payload as string) ?? 'Registration failed';
+        const payload = action.payload as { error?: string } | string;
+        state.error = typeof payload === 'object' ? (payload.error ?? 'Registration failed') : (payload ?? 'Registration failed');
         state.initialized = true;
       })
       .addCase(fetchCurrentUser.pending, (state) => {

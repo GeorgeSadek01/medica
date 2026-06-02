@@ -204,11 +204,11 @@ function HomePage() {
     const params = new URLSearchParams();
     if (name) params.set('name', name);
     if (specialty) params.set('specialty', specialty);
-    navigate(`/search/results?${params.toString()}`);
+    navigate(`/find-doctor?${params.toString()}`);
   };
 
   const handleSpecialtyClick = (spec: string) => {
-    navigate(`/search/results?specialty=${encodeURIComponent(spec)}`);
+    navigate(`/find-doctor?specialty=${encodeURIComponent(spec)}`);
   };
 
   return (

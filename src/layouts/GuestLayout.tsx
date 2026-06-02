@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import {
   Box, AppBar, Toolbar, Typography, Button, Container,
@@ -13,12 +13,25 @@ function GuestLayout({ children }: { children?: ReactNode }) {
         <Toolbar>
           <Typography
             variant="h6"
-            sx={{ flexGrow: 1, fontWeight: 700, cursor: 'pointer' }}
-            onClick={() => navigate('/')}
+            component={Link}
+            to="/"
+            sx={{
+              flexGrow: 1,
+              fontWeight: 800,
+              cursor: 'pointer',
+              letterSpacing: '-0.5px',
+              transition: 'all 0.2s ease',
+              textDecoration: 'none',
+              color: 'inherit',
+              '&:hover': { opacity: 0.85, transform: 'scale(1.03)' },
+            }}
           >
             Medica
           </Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <Button color="inherit" onClick={() => navigate('/find-doctor')}>
+              Find Doctors
+            </Button>
             <Button color="inherit" onClick={() => navigate('/login')}>
               Sign In
             </Button>

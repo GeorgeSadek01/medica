@@ -1,5 +1,6 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, Link as RouterLink } from 'react-router-dom';
 import { Box, Paper, Typography, Container } from '@mui/material';
+import { Link as MuiLink } from '@mui/material';
 
 function AuthLayout() {
   return (
@@ -14,9 +15,24 @@ function AuthLayout() {
     >
       <Container maxWidth="xs">
         <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
-          <Typography variant="h4" align="center" sx={{ fontWeight: 700 }} gutterBottom>
+          <MuiLink
+            component={RouterLink}
+            to="/"
+            underline="none"
+            color="inherit"
+            sx={{
+              fontWeight: 800,
+              fontSize: '1.75rem',
+              letterSpacing: '-0.5px',
+              transition: 'all 0.2s ease',
+              display: 'block',
+              textAlign: 'center',
+              mb: 0.35,
+              '&:hover': { color: 'primary.main', transform: 'scale(1.03)' },
+            }}
+          >
             Medica
-          </Typography>
+          </MuiLink>
           <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 3 }}>
             Your healthcare management platform
           </Typography>

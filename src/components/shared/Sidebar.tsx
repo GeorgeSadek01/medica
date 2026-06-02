@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -15,6 +15,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import { useAppSelector } from '../../store';
 import { selectUser } from '../../store/authSlice';
 
@@ -22,7 +23,7 @@ const DRAWER_WIDTH = 240;
 
 const patientLinks = [
   { label: 'Dashboard',    path: '/dashboard/patient',  icon: <DashboardIcon /> },
-  { label: 'Find Doctors', path: '/',                   icon: <LocalHospitalIcon /> },
+  { label: 'Find Doctors', path: '/find-doctor',        icon: <LocalHospitalIcon /> },
   { label: 'Appointments', path: '/appointments/patient', icon: <CalendarMonthIcon /> },
   { label: 'My Profile',   path: '/profile/patient',    icon: <PersonIcon /> },
 ];
@@ -37,6 +38,7 @@ const doctorLinks = [
 const adminLinks = [
   { label: 'Dashboard',    path: '/admin/dashboard',    icon: <DashboardIcon /> },
   { label: 'Users',        path: '/admin/users',        icon: <PeopleIcon /> },
+  { label: 'Verifications', path: '/admin/verifications', icon: <VerifiedUserIcon /> },
   { label: 'Appointments', path: '/admin/appointments', icon: <CalendarMonthIcon /> },
   { label: 'Specialties',  path: '/admin/specialties',  icon: <MedicalServicesIcon /> },
 ];
@@ -69,7 +71,20 @@ const Sidebar = ({ open, onClose, variant = 'temporary' }: SidebarProps) => {
   const drawerContent = (
     <Box sx={{ width: DRAWER_WIDTH }}>
       <Box sx={{ px: 2, py: 2.5 }}>
-        <Typography variant="h6" sx={{ fontWeight: 700 }} color="primary">
+        <Typography
+          variant="h6"
+          component={Link}
+          to="/"
+          sx={{
+            fontWeight: 800,
+            cursor: 'pointer',
+            letterSpacing: '-0.5px',
+            transition: 'all 0.2s ease',
+            textDecoration: 'none',
+            color: 'primary.main',
+            '&:hover': { opacity: 0.8, transform: 'scale(1.03)' },
+          }}
+        >
           Medica
         </Typography>
         <Typography variant="caption" color="text.secondary">

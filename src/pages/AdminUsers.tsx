@@ -4,8 +4,6 @@ import {
   Chip, CircularProgress, Switch, IconButton, Button, Dialog, DialogTitle, DialogContent,
   DialogContentText, DialogActions, Pagination,
 } from '@mui/material';
-import VerifiedIcon from '@mui/icons-material/Verified';
-import GppMaybeIcon from '@mui/icons-material/GppMaybe';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -69,12 +67,6 @@ export default function AdminUsers() {
     setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, is_active: newStatus } : u)));
   };
 
-  const handleVerifyToggle = async (user: User) => {
-    const newVerified = !(user.verified ?? false);
-    await adminService.verifyDoctor(user.id, newVerified);
-    setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, verified: newVerified } : u)));
-  };
-
   const handleDelete = async (user: User) => {
     await adminService.softDeleteUser(user.id);
     setUsers((prev) =>
@@ -88,8 +80,6 @@ export default function AdminUsers() {
     setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, role: 'admin' } : u)));
     setConfirmDialog(null);
   };
-
-  const unverifiedCount = users.filter((u) => u.role === 'doctor' && !u.verified).length;
 
   if (loading) {
     return (
@@ -105,15 +95,6 @@ export default function AdminUsers() {
         <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
           Users Management
         </Typography>
-        {unverifiedCount > 0 && (
-          <Chip
-            icon={<GppMaybeIcon />}
-            label={`${unverifiedCount} doctor${unverifiedCount > 1 ? 's' : ''} pending verification`}
-            color="warning"
-            variant="outlined"
-            size="small"
-          />
-        )}
       </Box>
 
       <Box sx={{ mb: 3, maxWidth: 400 }}>
@@ -131,14 +112,13 @@ export default function AdminUsers() {
               <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Role</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Verified</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {displayed.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                <TableCell colSpan={5} align="center" sx={{ py: 3, color: 'text.secondary' }}>
                   No users found.
                 </TableCell>
               </TableRow>
@@ -177,29 +157,6 @@ export default function AdminUsers() {
                         color={(u.is_active ?? true) ? 'success' : 'error'}
                       />
                     </Box>
-                  </TableCell>
-                  <TableCell>
-                    {u.role === 'doctor' ? (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <Switch
-                          checked={u.verified ?? false}
-                          onChange={() => handleVerifyToggle(u)}
-                          color="primary"
-                          size="small"
-                        />
-                        <Chip
-                          icon={u.verified ? <VerifiedIcon /> : <GppMaybeIcon />}
-                          label={u.verified ? 'Verified' : 'Pending'}
-                          size="small"
-                          color={u.verified ? 'success' : 'warning'}
-                          variant={u.verified ? 'filled' : 'outlined'}
-                        />
-                      </Box>
-                    ) : (
-                      <Typography variant="body2" color="text.disabled">
-                        —
-                      </Typography>
-                    )}
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 0.5 }}>

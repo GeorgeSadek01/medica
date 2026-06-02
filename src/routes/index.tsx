@@ -8,10 +8,14 @@ import PatientDashboard from '../pages/PatientDashboard';
 import PatientAppointments from '../pages/PatientAppointments';
 import PatientProfile from '../pages/PatientProfile';
 import HomePage from '../pages/HomePage';
+import FindDoctor from '../pages/FindDoctor';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
+import ForgotPasswordPage from '../pages/ForgotPasswordPage';
+import ResetPasswordPage from '../pages/ResetPasswordPage';
+import EmailVerificationPage from '../pages/EmailVerificationPage';
 import DoctorProfilePage from '../pages/DoctorProfilePage';
-import DoctorResults from '../pages/DoctorResults';
+
 import DoctorProfile from '../pages/DoctorProfile';
 import AppointmentDetails from '../pages/AppointmentDetails';
 import PaymentPage from '../pages/PaymentPage';
@@ -23,6 +27,7 @@ import AdminUsers from '../pages/AdminUsers';
 import AdminUserDetail from '../pages/AdminUserDetail';
 import AdminAppointments from '../pages/AdminAppointments';
 import AdminSpecialties from '../pages/AdminSpecialties';
+import AdminVerifications from '../pages/AdminVerifications';
 
 const router = createBrowserRouter([
   {
@@ -38,13 +43,29 @@ const router = createBrowserRouter([
         element: <AuthLayout />,
         children: [{ index: true, element: <RegisterPage /> }],
       },
+      {
+        path: '/forgot-password',
+        element: <AuthLayout />,
+        children: [{ index: true, element: <ForgotPasswordPage /> }],
+      },
+      {
+        path: '/reset-password',
+        element: <AuthLayout />,
+        children: [{ index: true, element: <ResetPasswordPage /> }],
+      },
+      {
+        path: '/verify-email',
+        element: <AuthLayout />,
+        children: [{ index: true, element: <EmailVerificationPage /> }],
+      },
     ],
   },
   {
     element: <RootLayout />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: 'search/results', element: <DoctorResults /> },
+      { path: 'find-doctor', element: <FindDoctor /> },
+
       { path: 'doctors/:id', element: <DoctorProfile /> },
       {
         element: <ProtectedRoute />,
@@ -73,6 +94,7 @@ const router = createBrowserRouter([
               { path: 'users/:id', element: <AdminUserDetail /> },
               { path: 'appointments', element: <AdminAppointments /> },
               { path: 'specialties', element: <AdminSpecialties /> },
+              { path: 'verifications', element: <AdminVerifications /> },
             ],
           },
         ],

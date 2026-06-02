@@ -1,23 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Box,
   Paper,
   Typography,
-  TextField,
   Button,
   CircularProgress,
   Divider,
-  InputAdornment,
   Container,
   Alert,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import appointmentService from '../services/appointment.service';
 import doctorService from '../services/doctor.service';
-import CreditCardIcon from '@mui/icons-material/CreditCard';
-import PersonIcon from '@mui/icons-material/Person';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import LockIcon from '@mui/icons-material/Lock';
 
 interface AppointmentData {
   id: number;
@@ -26,6 +20,7 @@ interface AppointmentData {
   date: string;
   time: string;
   status: string;
+  paid?: boolean;
 }
 
 interface DoctorData {
@@ -34,28 +29,27 @@ interface DoctorData {
   session_price?: number;
 }
 
-const PaymentPage: React.FC = () => {
+function PaymentPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [appointment, setAppointment] = useState<AppointmentData | null>(null);
   const [doctorInfo, setDoctorInfo] = useState<DoctorData | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const [cardName, setCardName] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvv, setCvv] = useState('');
-
+  const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     (async () => {
       if (!id) return;
-      const appt = await appointmentService.getById(Number(id));
-      if (appt) {
+      try {
+        const appt = await appointmentService.getById(Number(id));
         setAppointment(appt);
-        const doc = await doctorService.getById(appt.doctor);
-        setDoctorInfo(doc);
+        if (appt.doctor) {
+          const doc = await doctorService.getById(appt.doctor);
+          setDoctorInfo(doc);
+        }
+      } catch {
+        setError('Failed to load appointment details.');
       }
       setLoading(false);
     })();
@@ -63,50 +57,26 @@ const PaymentPage: React.FC = () => {
 
   const handlePay = async () => {
     if (!id) return;
-    setError(''); // clear previous errors
-
-    if (!cardName.trim()) {
-      setError('Please enter the name on the card');
-      return;
+    setError('');
+    setRedirecting(true);
+    try {
+      const session = await appointmentService.createPaymentSession(Number(id));
+      window.location.href = session.payment_url;
+    } catch (err: unknown) {
+      setRedirecting(false);
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? ((err as { response?: { data?: { error?: string } } }).response?.data?.error ??
+            'Failed to create payment session')
+          : err instanceof Error
+            ? err.message
+            : 'Failed to create payment session';
+      setError(msg);
     }
-    if (cardNumber.replace(/\s/g, '').length !== 16 || cvv.length !== 3 || expiry.length !== 5) {
-      setError('Please enter valid card details (16-digit card number, MM/YY expiry, 3-digit CVV)');
-      return;
-    }
-
-    await appointmentService.confirm(Number(id));
-    navigate('/dashboard/patient');
   };
 
   const handlePayLater = () => {
     navigate('/dashboard/patient');
-  };
-
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const val = e.target.value.replace(/\D/g, '').slice(0, 16);
-    const formatted = val.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
-    setCardNumber(formatted);
-  };
-
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const val = e.target.value;
-    if (expiry.endsWith('/') && val.length === expiry.length - 1) {
-      setExpiry(val.slice(0, -1));
-      return;
-    }
-    const digits = val.replace(/\D/g, '').slice(0, 4);
-    if (digits.length >= 3) {
-      setExpiry(`${digits.slice(0, 2)}/${digits.slice(2)}`);
-    } else if (digits.length === 2 && val.length > expiry.length) {
-      setExpiry(`${digits}/`);
-    } else {
-      setExpiry(digits);
-    }
-  };
-
-  const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const val = e.target.value.replace(/\D/g, '').slice(0, 3);
-    setCvv(val);
   };
 
   if (loading)
@@ -115,8 +85,21 @@ const PaymentPage: React.FC = () => {
         <CircularProgress />
       </Box>
     );
+
   if (!appointment)
     return <Typography sx={{ p: 3, textAlign: 'center' }}>Appointment not found.</Typography>;
+
+  if (appointment.paid)
+    return (
+      <Container maxWidth="sm" sx={{ py: 6 }}>
+        <Alert severity="success" sx={{ mb: 2 }}>
+          This appointment has already been paid.
+        </Alert>
+        <Button variant="contained" onClick={() => navigate('/dashboard/patient')}>
+          Back to Dashboard
+        </Button>
+      </Container>
+    );
 
   return (
     <Container maxWidth="sm" sx={{ py: 6 }}>
@@ -148,7 +131,7 @@ const PaymentPage: React.FC = () => {
           </Typography>
         </Box>
 
-        <Divider sx={{ mb: error ? 2 : 4 }}>Payment Details</Divider>
+        <Divider sx={{ mb: 3 }} />
 
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
@@ -156,102 +139,34 @@ const PaymentPage: React.FC = () => {
           </Alert>
         )}
 
-        <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <TextField
-            label="Name on Card"
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Button
+            variant="contained"
+            fullWidth
+            size="large"
+            onClick={handlePay}
+            disabled={redirecting}
+            sx={{ borderRadius: 2, py: 1.5, fontWeight: 'bold' }}
+          >
+            {redirecting ? 'Redirecting to Stripe...' : `Pay ${doctorInfo?.session_price ?? ''} EGP`}
+          </Button>
+          <Button
             variant="outlined"
             fullWidth
-            value={cardName}
-            onChange={(e) => setCardName(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <PersonIcon color="action" />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-          <TextField
-            label="Card Number"
-            variant="outlined"
-            fullWidth
-            value={cardNumber}
-            onChange={handleCardNumberChange}
-            placeholder="0000 0000 0000 0000"
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <CreditCardIcon color="action" />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-          <Box sx={{ display: 'flex', gap: 3 }}>
-            <TextField
-              label="Expiry (MM/YY)"
-              variant="outlined"
-              fullWidth
-              value={expiry}
-              onChange={handleExpiryChange}
-              placeholder="MM/YY"
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <CalendarMonthIcon color="action" />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <TextField
-              label="CVV"
-              variant="outlined"
-              fullWidth
-              value={cvv}
-              onChange={handleCvvChange}
-              placeholder="123"
-              type="password"
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LockIcon color="action" />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-            <Button
-              variant="outlined"
-              fullWidth
-              size="large"
-              onClick={handlePayLater}
-              sx={{ borderRadius: 2, py: 1.5, fontWeight: 'bold' }}
-            >
-              Pay Later
-            </Button>
-            <Button
-              variant="contained"
-              fullWidth
-              size="large"
-              onClick={handlePay}
-              sx={{ borderRadius: 2, py: 1.5, fontWeight: 'bold' }}
-            >
-              Pay Now
-            </Button>
-          </Box>
+            size="large"
+            onClick={handlePayLater}
+            disabled={redirecting}
+            sx={{ borderRadius: 2, py: 1.5, fontWeight: 'bold' }}
+          >
+            Pay Later
+          </Button>
+          <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
+            You will be redirected to Stripe&apos;s secure checkout page.
+          </Typography>
         </Box>
       </Paper>
     </Container>
   );
-};
+}
 
 export default PaymentPage;

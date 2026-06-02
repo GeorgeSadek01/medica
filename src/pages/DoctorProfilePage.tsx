@@ -185,7 +185,7 @@ export default function DoctorProfilePage() {
 
   if (user && user.role === 'doctor' && !user.verified) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+      <Box sx={{ position: 'fixed', top: '64px', left: 0, right: 0, bottom: 0, zIndex: 1250, display: 'flex', justifyContent: 'center', alignItems: 'center', bgcolor: 'background.default' }}>
         <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 4, maxWidth: 480 }}>
           <GppMaybeIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
           <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>

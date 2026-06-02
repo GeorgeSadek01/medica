@@ -20,7 +20,10 @@ const authService = {
     specialty?: string;
   }) => {
     const res = await api.post('/auth/register/', data);
-    return { message: 'Registration successful', user: res.data };
+    localStorage.setItem('accessToken', res.data.access);
+    localStorage.setItem('refreshToken', res.data.refresh);
+    localStorage.setItem(SESSION_KEY, String(res.data.user.id));
+    return { message: 'Registration successful', user: res.data.user };
   },
 
   logout: () => {
@@ -42,6 +45,34 @@ const authService = {
     } catch {
       return null;
     }
+  },
+
+  requestPasswordReset: async (email: string) => {
+    const res = await api.post('/auth/password-reset/', { email });
+    return res.data;
+  },
+
+  confirmPasswordReset: async (uidb64: string, token: string, password: string) => {
+    const res = await api.post('/auth/password-reset/confirm/', { uidb64, token, password });
+    return res.data;
+  },
+
+  verifyEmail: async (uidb64: string, token: string) => {
+    const res = await api.post('/auth/verify-email/', { uidb64, token });
+    return res.data;
+  },
+
+  resendVerification: async () => {
+    const res = await api.post('/auth/resend-verification/');
+    return res.data;
+  },
+
+  googleLogin: async (credential: string) => {
+    const res = await api.post('/auth/google/', { credential });
+    localStorage.setItem('accessToken', res.data.access);
+    localStorage.setItem('refreshToken', res.data.refresh);
+    localStorage.setItem(SESSION_KEY, String(res.data.user.id));
+    return res.data;
   },
 };
 

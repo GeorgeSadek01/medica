@@ -3,7 +3,7 @@ import api from './api';
 const appointmentService = {
   getAll: async (params?: Record<string, string | number>) => {
     const res = await api.get('/appointments/', { params });
-    return res.data;
+    return Array.isArray(res.data) ? res.data : res.data.results;
   },
 
   getById: async (id: number) => {
@@ -39,6 +39,13 @@ const appointmentService = {
       status: 'cancelled',
       doctor_notes: notes ?? '',
     });
+    return res.data;
+  },
+
+  complete: async (id: number, notes?: string) => {
+    const payload: Record<string, unknown> = { status: 'completed' };
+    if (notes !== undefined) payload.doctor_notes = notes;
+    const res = await api.patch(`/appointments/${id}/`, payload);
     return res.data;
   },
 
