@@ -87,6 +87,10 @@ function AppointmentDetails() {
     })();
   }, [id, searchParams]);
 
+  const isPatient = user?.role === 'patient';
+  const isDoctor = user?.role === 'doctor';
+  const isAdmin = user?.role === 'admin';
+
   const isWithin24h = useMemo(() => {
     if (!appt) return false;
     const apptDt = new Date(`${appt.date}T${appt.time}`);
@@ -144,9 +148,6 @@ function AppointmentDetails() {
       </Container>
     );
 
-  const isPatient = user?.role === 'patient';
-  const isDoctor = user?.role === 'doctor';
-  const isAdmin = user?.role === 'admin';
   const showPayButton = appt.status === 'pending' && !appt.paid && isPatient;
 
   return (
