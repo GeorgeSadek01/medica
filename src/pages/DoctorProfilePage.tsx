@@ -64,31 +64,35 @@ export default function DoctorProfilePage() {
     const initDoctorProfile = async () => {
       try {
         setLoading(true);
-        const [allDoctors, specs] = await Promise.all([
-          doctorService.getAll().catch(() => []),
-          adminService.getSpecialties().catch(() => []),
-        ]);
 
+        const specs = await adminService.getSpecialties().catch(() => []);
         const specNames = (specs as { name: string }[]).map((s) => s.name).sort();
         setSpecialtiesList(specNames);
 
-        const currentDoctor = allDoctors.find(
-          (d: any) =>
-            d.contact === user?.email ||
-            `${d.first_name} ${d.last_name}` === `${user?.first_name} ${user?.last_name}`,
-        );
+        let profileData = null;
 
-        if (currentDoctor) {
-          setDoctorId(currentDoctor.id);
-          const docSpecialty = currentDoctor.specialty || 'General Medicine';
+        try {
+          profileData = await doctorService.getMyProfile();
+        } catch {
+          const allDoctors = await doctorService.getAll().catch(() => []);
+          profileData = allDoctors.find(
+            (d: any) =>
+              d.contact === user?.email ||
+              `${d.first_name} ${d.last_name}` === `${user?.first_name} ${user?.last_name}`,
+          ) || null;
+        }
+
+        if (profileData) {
+          setDoctorId(profileData.id);
+          const docSpecialty = profileData.specialty || 'General Medicine';
           setFormData({
-            first_name: currentDoctor.first_name,
-            last_name: currentDoctor.last_name,
+            first_name: profileData.first_name,
+            last_name: profileData.last_name,
             specialty: docSpecialty,
-            bio: currentDoctor.bio || '',
-            contact: currentDoctor.contact,
-            session_price: currentDoctor.session_price ?? 0,
-            session_duration: currentDoctor.session_duration ?? 30,
+            bio: profileData.bio || '',
+            contact: profileData.contact,
+            session_price: profileData.session_price ?? 0,
+            session_duration: profileData.session_duration ?? 30,
           });
           if (docSpecialty && !specNames.includes(docSpecialty)) {
             setSpecialtiesList((prev) => [...prev, docSpecialty].sort());
@@ -175,24 +179,29 @@ export default function DoctorProfilePage() {
 
     try {
       setSaving(true);
+      const payload = {
+        specialty: formData.specialty,
+        bio: formData.bio,
+        contact: formData.contact,
+        session_price: formData.session_price,
+        session_duration: formData.session_duration,
+      };
+
       if (doctorId) {
-        await doctorService.updateProfile(doctorId, {
-          specialty: formData.specialty,
-          bio: formData.bio,
-          contact: formData.contact,
-          session_price: formData.session_price,
-          session_duration: formData.session_duration,
-        });
-
-        if (formData.specialty && !specialtiesList.includes(formData.specialty)) {
-          await adminService.createSpecialty(formData.specialty).catch(() => {});
-          setSpecialtiesList((prev) => [...prev, formData.specialty].sort());
-        }
-
-        setAlertMessage({ type: 'success', text: 'Profile information saved successfully! 🎉' });
+        await doctorService.updateProfile(doctorId, payload);
       } else {
-        setAlertMessage({ type: 'success', text: 'Profile changes applied locally!' });
+        const saved = await doctorService.updateMyProfile(payload);
+        if (saved?.id) {
+          setDoctorId(saved.id);
+        }
       }
+
+      if (formData.specialty && !specialtiesList.includes(formData.specialty)) {
+        await adminService.createSpecialty(formData.specialty).catch(() => {});
+        setSpecialtiesList((prev) => [...prev, formData.specialty].sort());
+      }
+
+      setAlertMessage({ type: 'success', text: 'Profile information saved successfully! 🎉' });
     } catch {
       setAlertMessage({ type: 'error', text: 'An error occurred while saving configuration.' });
     } finally {

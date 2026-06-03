@@ -24,6 +24,11 @@ const doctorService = {
     return res.data;
   },
 
+  getMyProfile: async () => {
+    const res = await api.get('/doctors/profile/me/');
+    return res.data;
+  },
+
   updateMyProfile: async (data: Record<string, unknown>) => {
     const res = await api.patch('/doctors/profile/me/', data);
     return res.data;
