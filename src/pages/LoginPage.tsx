@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link as RouterLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -10,20 +10,32 @@ import {
   IconButton,
   Link,
   Divider,
+  Snackbar,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { ValidationError } from 'yup';
 import { loginSchema } from '../validations';
 import { useAppDispatch, useAppSelector } from '../store';
 import { loginUser, googleLoginUser, clearError, selectAuth } from '../store/authSlice';
+import { useSnackbar } from '../hooks';
 import type { LoginFormData } from '../validations';
 
 function LoginPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { loading, error } = useAppSelector(selectAuth);
   const redirectMessage = searchParams.get('message');
+  const { snackbar, showSuccess, hideSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    const toast = (location.state as { verifyEmailToast?: string })?.verifyEmailToast;
+    if (toast) {
+      showSuccess(toast);
+      window.history.replaceState({}, '');
+    }
+  }, []);
 
   const [form, setForm] = useState<LoginFormData>({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
@@ -161,89 +173,96 @@ function LoginPage() {
   }, []);
 
   return (
-    <Box component="form" onSubmit={handleSubmit} noValidate>
-      {redirectMessage && (
-        <Alert severity="info" sx={{ mb: 2 }} onClose={() => navigate('/login', { replace: true })}>
-          {redirectMessage}
-        </Alert>
-      )}
+    <>
+      <Box component="form" onSubmit={handleSubmit} noValidate>
+        {redirectMessage && (
+          <Alert severity="info" sx={{ mb: 2 }} onClose={() => navigate('/login', { replace: true })}>
+            {redirectMessage}
+          </Alert>
+        )}
 
-      {(error || googleError) && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error || googleError}
-        </Alert>
-      )}
+        {(error || googleError) && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error || googleError}
+          </Alert>
+        )}
 
-      <TextField
-        fullWidth
-        label="Email"
-        type="email"
-        value={form.email}
-        onChange={handleChange('email')}
-        onBlur={handleBlur('email')}
-        error={!!fieldErrors.email}
-        helperText={fieldErrors.email}
-        margin="normal"
-        autoComplete="email"
-        autoFocus
-      />
+        <TextField
+          fullWidth
+          label="Email"
+          type="email"
+          value={form.email}
+          onChange={handleChange('email')}
+          onBlur={handleBlur('email')}
+          error={!!fieldErrors.email}
+          helperText={fieldErrors.email}
+          margin="normal"
+          autoComplete="email"
+          autoFocus
+        />
 
-      <TextField
-        fullWidth
-        label="Password"
-        type={showPassword ? 'text' : 'password'}
-        value={form.password}
-        onChange={handleChange('password')}
-        onBlur={handleBlur('password')}
-        error={!!fieldErrors.password}
-        helperText={fieldErrors.password}
-        margin="normal"
-        autoComplete="current-password"
-        slotProps={{
-          input: {
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={() => setShowPassword((s) => !s)} edge="end" tabIndex={-1}>
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
-          },
-        }}
-      />
+        <TextField
+          fullWidth
+          label="Password"
+          type={showPassword ? 'text' : 'password'}
+          value={form.password}
+          onChange={handleChange('password')}
+          onBlur={handleBlur('password')}
+          error={!!fieldErrors.password}
+          helperText={fieldErrors.password}
+          margin="normal"
+          autoComplete="current-password"
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setShowPassword((s) => !s)} edge="end" tabIndex={-1}>
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
 
-      <Typography variant="body2" align="right" sx={{ mt: 0.5 }}>
-        <Link component={RouterLink} to="/forgot-password" underline="hover">
-          Forgot password?
-        </Link>
-      </Typography>
-
-      <Button
-        type="submit"
-        fullWidth
-        variant="contained"
-        size="large"
-        disabled={loading}
-        sx={{ mt: 2, mb: 2, py: 1.3 }}
-      >
-        {loading ? 'Signing in...' : 'Sign In'}
-      </Button>
-
-      <Divider sx={{ my: 2 }}>
-        <Typography variant="body2" color="text.secondary">
-          OR
+        <Typography variant="body2" align="right" sx={{ mt: 0.5 }}>
+          <Link component={RouterLink} to="/forgot-password" underline="hover">
+            Forgot password?
+          </Link>
         </Typography>
-      </Divider>
 
-      <Box ref={googleButtonRef} sx={{ display: 'flex', justifyContent: 'center', mb: 2, minHeight: 40, opacity: googleLoading ? 0.6 : 1, pointerEvents: googleLoading ? 'none' : 'auto' }} />
+        <Button
+          type="submit"
+          fullWidth
+          variant="contained"
+          size="large"
+          disabled={loading}
+          sx={{ mt: 2, mb: 2, py: 1.3 }}
+        >
+          {loading ? 'Signing in...' : 'Sign In'}
+        </Button>
 
-      <Typography variant="body2" align="center">
-        Don&apos;t have an account?{' '}
-        <Link component={RouterLink} to="/register" underline="hover">
-          Sign up
-        </Link>
-      </Typography>
-    </Box>
+        <Divider sx={{ my: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            OR
+          </Typography>
+        </Divider>
+
+        <Box ref={googleButtonRef} sx={{ display: 'flex', justifyContent: 'center', mb: 2, minHeight: 40, opacity: googleLoading ? 0.6 : 1, pointerEvents: googleLoading ? 'none' : 'auto' }} />
+
+        <Typography variant="body2" align="center">
+          Don&apos;t have an account?{' '}
+          <Link component={RouterLink} to="/register" underline="hover">
+            Sign up
+          </Link>
+        </Typography>
+      </Box>
+      <Snackbar open={snackbar.open} autoHideDuration={5000} onClose={hideSnackbar}>
+        <Alert severity={snackbar.severity} onClose={hideSnackbar} sx={{ borderRadius: 2 }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </>
   );
 }
 

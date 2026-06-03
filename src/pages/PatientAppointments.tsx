@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box, Paper, Typography, Divider, Button, Pagination, Chip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -15,7 +15,14 @@ interface Appointment {
   date: string;
   time: string;
   status: string;
+  paid: boolean;
+  refunded: boolean;
   notes: string;
+}
+
+function isWithin24h(date: string, time: string) {
+  const apptDt = new Date(`${date}T${time}`);
+  return apptDt.getTime() - Date.now() < 24 * 60 * 60 * 1000;
 }
 
 function formatDate(d: string) {
@@ -126,12 +133,36 @@ function PatientAppointments() {
                     </>
                   )}
                   {a.status === 'confirmed' && (
-                    <Chip
-                      label="PAID & CONFIRMED"
-                      color="success"
-                      size="small"
-                      sx={{ fontWeight: 'bold' }}
-                    />
+                    <>
+                      <Chip
+                        label="PAID & CONFIRMED"
+                        color="success"
+                        size="small"
+                        sx={{ fontWeight: 'bold' }}
+                      />
+                      {!isWithin24h(a.date, a.time) && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          onClick={async () => {
+                            const ok = a.paid
+                              ? window.confirm('A full refund will be issued. Continue?')
+                              : true;
+                            if (!ok) return;
+                            await appointmentService.cancel(a.id);
+                            window.location.reload();
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                      {isWithin24h(a.date, a.time) && (
+                        <Typography variant="caption" color="error">
+                          Cannot cancel (within 24h)
+                        </Typography>
+                      )}
+                    </>
                   )}
                 </Box>
               </Paper>

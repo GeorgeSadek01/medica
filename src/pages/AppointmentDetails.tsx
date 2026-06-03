@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -87,14 +87,36 @@ function AppointmentDetails() {
     })();
   }, [id, searchParams]);
 
+  const isWithin24h = useMemo(() => {
+    if (!appt) return false;
+    const apptDt = new Date(`${appt.date}T${appt.time}`);
+    return apptDt.getTime() - Date.now() < 24 * 60 * 60 * 1000;
+  }, [appt]);
+
+  const canCancel = isPatient && (
+    appt.status === 'pending' ||
+    (appt.status === 'confirmed' && !isWithin24h)
+  );
+
   const handleCancel = async () => {
     if (!appt) return;
+    const isPaid = appt.status === 'confirmed' && appt.paid;
+    const confirmed = isPaid
+      ? window.confirm('This appointment has been paid. Cancelling will issue a full refund. Continue?')
+      : true;
+    if (!confirmed) return;
+
     setCancelling(true);
     try {
-      await appointmentService.cancel(appt.id);
-      setAppt({ ...appt, status: 'cancelled' });
-    } catch {
-      // ignore
+      const result = await appointmentService.cancel(appt.id);
+      setAppt({ ...appt, status: 'cancelled', paid: false, refunded: true });
+      setPaymentMsg({ type: 'success', text: result?.message || 'Appointment cancelled successfully.' });
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? ((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Failed to cancel')
+          : 'Failed to cancel';
+      setPaymentMsg({ type: 'error', text: msg });
     }
     setCancelling(false);
   };
@@ -126,7 +148,6 @@ function AppointmentDetails() {
   const isDoctor = user?.role === 'doctor';
   const isAdmin = user?.role === 'admin';
   const showPayButton = appt.status === 'pending' && !appt.paid && isPatient;
-  const canCancel = isPatient && appt.status === 'pending';
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
@@ -265,10 +286,10 @@ function AppointmentDetails() {
             )}
           </Grid>
 
-          {showPayButton || canCancel ? (
+          {showPayButton || canCancel || (isPatient && appt.status === 'confirmed') ? (
             <>
               <Divider sx={{ my: 3 }} />
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
                 {showPayButton && (
                   <Button variant="contained" size="large" onClick={handlePay} sx={{ px: 4 }}>
                     Pay Now
@@ -284,6 +305,21 @@ function AppointmentDetails() {
                     {cancelling ? 'Cancelling...' : 'Cancel Appointment'}
                   </Button>
                 )}
+                {isPatient && appt.status === 'confirmed' && !canCancel && (
+                  <Box>
+                    <Typography variant="body2" color="error">
+                      Cannot cancel — less than 24 hours before appointment.
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Cancellation is allowed up to 24 hours before the scheduled time.
+                    </Typography>
+                  </Box>
+                )}
+                {isPatient && appt.status === 'confirmed' && canCancel && appt.paid && (
+                  <Typography variant="caption" color="text.secondary">
+                    A full refund will be issued upon cancellation.
+                  </Typography>
+                )}
               </Box>
               {(isDoctor || isAdmin) && appt.status !== 'cancelled' && (
                 <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
@@ -295,15 +331,7 @@ function AppointmentDetails() {
                 </Box>
               )}
             </>
-          ) : (
-            isPatient && appt.status === 'confirmed' && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Your appointment is confirmed. If you need to reschedule, please contact the clinic.
-                </Typography>
-              </Box>
-            )
-          )}
+          ) : null}
         </Box>
       </Paper>
     </Container>

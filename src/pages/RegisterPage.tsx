@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -38,6 +38,7 @@ import doctorService from '../services/doctor.service';
 import type { RegisterFormData } from '../validations';
 
 function RegisterPage() {
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { loading, error } = useAppSelector(selectAuth);
 
@@ -58,7 +59,6 @@ function RegisterPage() {
   const [identityFile, setIdentityFile] = useState<File | null>(null);
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [documentsUploading, setDocumentsUploading] = useState(false);
-  const [showVerificationBanner, setShowVerificationBanner] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -129,7 +129,10 @@ function RegisterPage() {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('medica_session_userId');
-      setShowVerificationBanner(true);
+      navigate('/login', {
+        state: { verifyEmailToast: 'Account created! Please check your email to verify your account before signing in.' },
+        replace: true,
+      });
     } else if (registerUser.rejected.match(result)) {
       const payload = result.payload as { field_errors?: Partial<Record<keyof RegisterFormData, string>> };
       if (payload?.field_errors) {
@@ -139,19 +142,6 @@ function RegisterPage() {
   };
 
   const isDoctor = form.role === 'doctor';
-
-  if (showVerificationBanner) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 2 }}>
-        <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>
-          Account created! Please check your email to verify your account before signing in.
-        </Alert>
-        <Button variant="contained" component={RouterLink} to="/login" sx={{ mt: 1 }}>
-          Go to Sign In
-        </Button>
-      </Box>
-    );
-  }
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate>
