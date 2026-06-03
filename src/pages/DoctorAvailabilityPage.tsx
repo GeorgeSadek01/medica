@@ -73,16 +73,24 @@ export default function DoctorAvailabilityPage() {
     const initAvailability = async () => {
       try {
         setLoading(true);
-        const allDoctors = await doctorService.getAll().catch(() => []);
-        const currentDoctor = allDoctors.find(
-          (d: any) =>
-            d.contact === user?.email ||
-            `${d.first_name} ${d.last_name}` === `${user?.first_name} ${user?.last_name}`,
-        );
-        if (currentDoctor) {
-          setDoctorId(currentDoctor.id);
-          setSessionPrice(currentDoctor.session_price ?? 0);
-          setSlots(currentDoctor.availability || []);
+
+        let profileData = null;
+
+        try {
+          profileData = await doctorService.getMyProfile();
+        } catch {
+          const allDoctors = await doctorService.getAll().catch(() => []);
+          profileData = allDoctors.find(
+            (d: any) =>
+              d.contact === user?.email ||
+              `${d.first_name} ${d.last_name}` === `${user?.first_name} ${user?.last_name}`,
+          ) || null;
+        }
+
+        if (profileData) {
+          setDoctorId(profileData.id);
+          setSessionPrice(profileData.session_price ?? 0);
+          setSlots(profileData.availability || []);
         }
 
         if (user?.role === 'doctor' && !user.verified) {

@@ -91,13 +91,21 @@ export default function DoctorAppointmentsPage() {
     try {
       setLoading(true);
       const allApps = await appointmentService.getAll().catch(() => []);
-      const allDoctors = await doctorService.getAll().catch(() => []);
-      const currentDoc = allDoctors.find((d: any) => d.contact === user?.email);
+      let currentDocId: number | null = null;
 
-      if (currentDoc) {
+      try {
+        const myProfile = await doctorService.getMyProfile();
+        currentDocId = myProfile.id;
+      } catch {
+        const allDoctors = await doctorService.getAll().catch(() => []);
+        const currentDoc = allDoctors.find((d: any) => d.contact === user?.email);
+        if (currentDoc) currentDocId = currentDoc.id;
+      }
+
+      if (currentDocId) {
         setAppointments(
           allApps.filter(
-            (app: Appointment) => Number(app.doctor) === Number(currentDoc.id),
+            (app: Appointment) => Number(app.doctor) === Number(currentDocId),
           ) as Appointment[],
         );
       } else {
