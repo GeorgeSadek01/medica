@@ -34,6 +34,7 @@ interface AppointmentData {
   time: string;
   status: string;
   paid?: boolean;
+  refunded?: boolean;
   notes?: string;
   doctor_notes?: string;
   patient_name?: string;
@@ -179,7 +180,14 @@ function AppointmentDetails() {
               size="small"
               sx={{ fontWeight: 600, color: '#fff' }}
             />
-            {appt.paid !== undefined && (
+            {appt.refunded ? (
+              <Chip
+                label="Refunded"
+                color="warning"
+                size="small"
+                sx={{ fontWeight: 600, color: '#fff' }}
+              />
+            ) : appt.paid !== undefined && (
               <Chip
                 icon={<Payment sx={{ fontSize: 16 }} />}
                 label={appt.paid ? 'Paid' : 'Unpaid'}

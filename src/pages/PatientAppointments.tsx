@@ -7,6 +7,7 @@ import { selectUser } from '../store/authSlice';
 
 interface Appointment {
   id: number;
+  doctor: number;
   doctor_name: string;
   specialty: string;
   patient: number;
@@ -177,6 +178,17 @@ function PatientAppointments() {
                 <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
                   Status: {a.status}
                 </Typography>
+                {a.status === 'completed' && (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="warning"
+                    sx={{ mt: 1 }}
+                    onClick={() => navigate(`/doctors/${a.doctor}`)}
+                  >
+                    Write a Review
+                  </Button>
+                )}
               </Paper>
             ))}
             {historyPages > 1 && (

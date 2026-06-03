@@ -13,6 +13,7 @@ import {
   Pagination,
   Chip,
   CircularProgress,
+  Rating,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -24,6 +25,8 @@ interface Doctor {
   last_name: string;
   specialty: string;
   bio: string;
+  average_rating: number;
+  review_count: number;
 }
 
 const ITEMS_PER_PAGE = 6;
@@ -176,13 +179,20 @@ function FindDoctor() {
                     <Typography variant="h6" fontWeight={600}>
                       Dr. {d.first_name} {d.last_name}
                     </Typography>
-                    <Chip
-                      label={d.specialty}
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                      sx={{ mt: 0.5 }}
-                    />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                      <Chip
+                        label={d.specialty}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Rating value={d.average_rating} precision={0.1} readOnly size="small" />
+                        <Typography variant="body2" color="text.secondary">
+                          ({d.review_count})
+                        </Typography>
+                      </Box>
+                    </Box>
                     {d.bio && (
                       <Typography
                         variant="body2"

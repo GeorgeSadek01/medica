@@ -32,6 +32,7 @@ interface DoctorInfo {
   first_name: string;
   last_name: string;
   session_price?: number;
+  session_duration?: number;
 }
 
 interface AppointmentData {
@@ -97,7 +98,17 @@ function generateDateOptions(availability: AvailabilityBlock[]): DateOption[] {
   return dates;
 }
 
-function generateSlotsForDate(date: string, blocks: AvailabilityBlock[]): Slot[] {
+function toMinutes(h: number, m: number): number {
+  return h * 60 + m;
+}
+
+function formatMinutes(totalMinutes: number): string {
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+function generateSlotsForDate(date: string, blocks: AvailabilityBlock[], durationMinutes: number): Slot[] {
   const weekday = getWeekdayName(date);
   const rawBlocks = blocks.filter((s) => s.day === weekday);
   const slots: Slot[] = [];
@@ -106,20 +117,16 @@ function generateSlotsForDate(date: string, blocks: AvailabilityBlock[]): Slot[]
     const [startH, startM] = (block.start_time || '00:00').split(':').map(Number);
     const [endH, endM] = (block.end_time || '23:59').split(':').map(Number);
 
-    let currentH = startH;
-    let currentM = startM;
+    const startMinutes = toMinutes(startH, startM);
+    const endMinutes = toMinutes(endH, endM);
+    let currentMinutes = startMinutes;
     let slotIndex = 0;
 
-    while (currentH < endH || (currentH === endH && currentM < endM)) {
-      let nextH = currentH + 1;
-      let nextM = currentM;
-      if (nextH > endH || (nextH === endH && nextM > endM)) {
-        nextH = endH;
-        nextM = endM;
-      }
+    while (currentMinutes + durationMinutes <= endMinutes) {
+      const nextMinutes = currentMinutes + durationMinutes;
 
-      const sTime = `${String(currentH).padStart(2, '0')}:${String(currentM).padStart(2, '0')}`;
-      const eTime = `${String(nextH).padStart(2, '0')}:${String(nextM).padStart(2, '0')}`;
+      const sTime = formatMinutes(currentMinutes);
+      const eTime = formatMinutes(nextMinutes);
 
       slots.push({
         id: `${block.id}-${slotIndex}`,
@@ -130,8 +137,7 @@ function generateSlotsForDate(date: string, blocks: AvailabilityBlock[]): Slot[]
         slotIndex,
       });
 
-      currentH = nextH;
-      currentM = nextM;
+      currentMinutes = nextMinutes;
       slotIndex++;
     }
   });
@@ -173,7 +179,8 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
       return;
     }
 
-    const generatedSlots = generateSlotsForDate(date, availability);
+    const slotDuration = doctorInfo?.session_duration ?? 30;
+    const generatedSlots = generateSlotsForDate(date, availability, slotDuration);
 
     let slots = generatedSlots;
     const todayStr = new Date().toISOString().slice(0, 10);
@@ -384,6 +391,12 @@ function BookingModal({ open, onClose, doctorId, onBooked }: Props) {
               <Typography color="text.secondary">Time</Typography>
               <Typography fontWeight={600}>
                 {selectedSlot?.start_time} &mdash; {selectedSlot?.end_time}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography color="text.secondary">Duration</Typography>
+              <Typography fontWeight={600}>
+                {doctorInfo?.session_duration ?? 30} min
               </Typography>
             </Box>
             {doctorInfo?.session_price ? (

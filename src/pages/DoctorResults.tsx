@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Typography, Card, CardContent, Button, Stack, Pagination } from '@mui/material';
+import { Box, Typography, Card, CardContent, Button, Stack, Pagination, Rating } from '@mui/material';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import doctorService from '../services/doctor.service';
 
@@ -9,6 +9,8 @@ interface Doctor {
   last_name: string;
   specialty: string;
   bio: string;
+  average_rating: number;
+  review_count: number;
 }
 
 const ITEMS_PER_PAGE = 5;
@@ -58,6 +60,12 @@ function DoctorResults() {
                     <Typography variant="body2" color="text.secondary">
                       {d.specialty}
                     </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                      <Rating value={d.average_rating} precision={0.1} readOnly size="small" />
+                      <Typography variant="body2" color="text.secondary">
+                        ({d.review_count})
+                      </Typography>
+                    </Box>
                     <Typography variant="body2" sx={{ mt: 1 }}>
                       {d.bio}
                     </Typography>

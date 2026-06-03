@@ -32,6 +32,8 @@ import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import DescriptionIcon from '@mui/icons-material/Description';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import GppMaybeIcon from '@mui/icons-material/GppMaybe';
+import PaymentIcon from '@mui/icons-material/Payment';
+import MoneyOffIcon from '@mui/icons-material/MoneyOff';
 
 import adminService from '../services/admin.service';
 import appointmentService from '../services/appointment.service';
@@ -52,6 +54,8 @@ interface Appointment {
   status: string;
   notes: string;
   doctor_notes: string;
+  paid: boolean;
+  refunded: boolean;
   allowed_next_statuses?: string[];
 }
 
@@ -81,6 +85,7 @@ export default function DoctorAppointmentsPage() {
 
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [doctorNotes, setDoctorNotes] = useState('');
+  const [refundConfirm, setRefundConfirm] = useState<Appointment | null>(null);
 
   const loadAppointments = async () => {
     try {
@@ -164,14 +169,33 @@ export default function DoctorAppointmentsPage() {
 
   const handleReject = async () => {
     if (!activeApp) return;
-    const appId = activeApp.id;
-    handleMenuClose();
+    if (activeApp.paid) {
+      setRefundConfirm(activeApp);
+      return;
+    }
+    await doReject(activeApp);
+  };
+
+  const doReject = async (app: Appointment) => {
     try {
-      await appointmentService.reject(appId, 'Cancelled by Doctor');
+      await appointmentService.reject(app.id, 'Cancelled by Doctor');
       setAlert({ type: 'success', text: 'Appointment cancelled.' });
       loadAppointments();
     } catch {
       setAlert({ type: 'error', text: 'Failed to cancel appointment.' });
+    }
+  };
+
+  const handleRefundConfirm = async () => {
+    if (!refundConfirm) return;
+    setRefundConfirm(null);
+    setAnchorEl(null);
+    try {
+      await appointmentService.reject(refundConfirm.id, 'Cancelled by Doctor - refunded');
+      setAlert({ type: 'success', text: 'Appointment cancelled and full refund issued to patient.' });
+      loadAppointments();
+    } catch {
+      setAlert({ type: 'error', text: 'Failed to cancel appointment or process refund.' });
     }
   };
 
@@ -325,6 +349,7 @@ export default function DoctorAppointmentsPage() {
                 <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Time / Slot</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Payment</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Doctor Diagnosis</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>Actions</TableCell>
               </TableRow>
@@ -332,7 +357,7 @@ export default function DoctorAppointmentsPage() {
             <TableBody>
               {appointments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 3, color: 'text.secondary' }}>
                     No appointments associated with your profile yet.
                   </TableCell>
                 </TableRow>
@@ -345,6 +370,29 @@ export default function DoctorAppointmentsPage() {
                     <TableCell>{app.date}</TableCell>
                     <TableCell>{app.time || `Slot ${app.time_slot}`}</TableCell>
                     <TableCell>{getStatusChip(app.status)}</TableCell>
+                    <TableCell>
+                      {app.refunded ? (
+                        <Chip
+                          icon={<MoneyOffIcon sx={{ fontSize: 14 }} />}
+                          label="Refunded"
+                          color="warning"
+                          size="small"
+                          variant="outlined"
+                          sx={{ fontWeight: 600 }}
+                        />
+                      ) : app.paid ? (
+                        <Chip
+                          icon={<PaymentIcon sx={{ fontSize: 14 }} />}
+                          label="Paid"
+                          color="success"
+                          size="small"
+                          variant="filled"
+                          sx={{ fontWeight: 600, color: '#fff' }}
+                        />
+                      ) : (
+                        <Chip label="Unpaid" size="small" variant="outlined" sx={{ fontWeight: 500 }} />
+                      )}
+                    </TableCell>
                     <TableCell
                       sx={{
                         fontStyle: app.doctor_notes ? 'normal' : 'italic',
@@ -413,6 +461,42 @@ export default function DoctorAppointmentsPage() {
           ),
         )}
       </Menu>
+
+      <Dialog
+        open={Boolean(refundConfirm)}
+        onClose={() => setRefundConfirm(null)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle sx={{ fontWeight: 'bold', color: 'error.main' }}>
+          Confirm Cancellation & Refund
+        </DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            This appointment has already been <strong>paid</strong>. Cancelling will issue a{' '}
+            <strong>full refund</strong> to the patient.
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Patient: <strong>{refundConfirm?.patient_name || `Patient #${refundConfirm?.patient}`}</strong>
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Date: <strong>{refundConfirm?.date}</strong> at <strong>{refundConfirm?.time}</strong>
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 3 }}>
+          <Button onClick={() => setRefundConfirm(null)} sx={{ textTransform: 'none' }}>
+            Keep Appointment
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleRefundConfirm}
+            sx={{ textTransform: 'none', fontWeight: 'bold' }}
+          >
+            Cancel & Refund
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={isNotesOpen}

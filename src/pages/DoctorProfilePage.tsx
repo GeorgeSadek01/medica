@@ -28,6 +28,7 @@ interface ProfileFormData {
   bio: string;
   contact: string;
   session_price: number;
+  session_duration: number;
 }
 
 export default function DoctorProfilePage() {
@@ -42,6 +43,7 @@ export default function DoctorProfilePage() {
     bio: '',
     contact: '',
     session_price: 0,
+    session_duration: 30,
   });
 
   const [loading, setLoading] = useState(true);
@@ -86,6 +88,7 @@ export default function DoctorProfilePage() {
             bio: currentDoctor.bio || '',
             contact: currentDoctor.contact,
             session_price: currentDoctor.session_price ?? 0,
+            session_duration: currentDoctor.session_duration ?? 30,
           });
           if (docSpecialty && !specNames.includes(docSpecialty)) {
             setSpecialtiesList((prev) => [...prev, docSpecialty].sort());
@@ -98,6 +101,7 @@ export default function DoctorProfilePage() {
             bio: '',
             contact: user.email || '',
             session_price: 0,
+            session_duration: 30,
           });
         }
 
@@ -177,6 +181,7 @@ export default function DoctorProfilePage() {
           bio: formData.bio,
           contact: formData.contact,
           session_price: formData.session_price,
+          session_duration: formData.session_duration,
         });
 
         if (formData.specialty && !specialtiesList.includes(formData.specialty)) {
@@ -333,6 +338,21 @@ export default function DoctorProfilePage() {
               htmlInput: { min: 0 },
             }}
             helperText="Set your consultation fee per session"
+          />
+
+          <TextField
+            label="Session Duration (minutes)"
+            name="session_duration"
+            type="number"
+            value={formData.session_duration}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, session_duration: Math.max(15, Number(e.target.value)) }))
+            }
+            fullWidth
+            slotProps={{
+              htmlInput: { min: 15, step: 5 },
+            }}
+            helperText="Duration per appointment session (min 15 min, step 5 min)"
           />
 
           <TextField
