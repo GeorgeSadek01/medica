@@ -97,7 +97,7 @@ function AppointmentDetails() {
     return apptDt.getTime() - Date.now() < 24 * 60 * 60 * 1000;
   }, [appt]);
 
-  const canCancel = isPatient && (
+  const canCancel = appt && isPatient && (
     appt.status === 'pending' ||
     (appt.status === 'confirmed' && !isWithin24h)
   );
